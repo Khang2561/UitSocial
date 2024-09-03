@@ -1,0 +1,122 @@
+import { StyleSheet, Text, View, Pressable, Alert } from "react-native";
+import React, { useState } from "react";
+import ScreenWrapper from "@/components/ScreenWrapprer";
+import Icon from 'react-native-vector-icons/Feather'; 
+import Icon1 from 'react-native-vector-icons/MaterialIcons'; 
+import Icon2 from 'react-native-vector-icons/SimpleLineIcons'; 
+import { theme } from "../constants/theme";
+import { StatusBar } from 'expo-status-bar'; 
+import { useRouter } from "expo-router";
+import { wp, hp } from '../helpers/common';
+import Input from "@/components/Input";
+import Button from "@/components/Button";
+
+const SignUp = () => {
+    const router = useRouter();
+    const [email, setEmail] = useState(''); // Khai báo state cho email
+    const [name, setName] = useState('');
+    const [password, setPassword] =useState('');
+    const [loading, setLoading] = useState(false);
+    const onSubmit = async () =>{
+        if(!email || !password ||!name){
+            Alert.alert('Đăng kí', "Bạn phải điền đầy đủ thông tin");
+            return;
+        }
+    }
+
+    return (
+        <ScreenWrapper bg="white">
+           <StatusBar style="dark" />
+           <View style={style.container}>
+                {/* NÚT NHẤN CALL BACK */}
+                <Pressable onPress={()=>router.push('/welcome')} style={style.button}>
+                    <Icon name="arrow-left" size={24} color={theme.colors.text} />
+                </Pressable>
+
+                {/* Welcome */}
+                <View>
+                    <Text style={style.welcomeText}>Chào,</Text>
+                    <Text style={style.welcomeText}>UIT SOCIAL</Text>
+                </View>
+
+                {/* FORM */}
+                <View style={style.form}>
+                    <Text style={{ fontSize: hp(1.5), color: theme.colors.text }}>
+                        Vui lòng điền đầy đủ các thông tin
+                    </Text>
+                    <Input
+                        icon={<Icon name="mail" size={26} />}
+                        placeholder='Nhập vào email của bạn'
+                        onChangeText={(value: string) => setEmail(value)} // Chỉ định kiểu cho value
+                        value={email} // Đặt giá trị cho TextInput
+                    />
+                    <Input
+                        icon={<Icon2 name="user" size={26} />}
+                        placeholder='Nhập vào tên của bạn'
+                        onChangeText={(value: string) => setName(value)} // Chỉ định kiểu cho value
+                        value={name} // Đặt giá trị cho TextInput
+                    />
+                    <Input
+                        icon={<Icon1 name="password" size={26} />}
+                        placeholder='Nhập vào mật khẩu của bạn'
+                        onChangeText={(value: string) => setPassword(value)} // Chỉ định kiểu cho value
+                        secureTextEntry
+                        value={password} // Đặt giá trị cho TextInput
+                    />
+                    {/*Button*/}
+                    <Button title={'Đăng kí'} loading={loading} onPress={onSubmit}/>
+                </View>
+                {/*Footer*/}
+                <View style={style.footer}>
+                    <Text style={style.footerText}>
+                        Bạn đã có tài khoảng 
+                    </Text>
+                    <Pressable onPress={()=>router.push('/login')}>
+                        <Text style={[style.footerText,{color:theme.colors.primaryDark, fontWeight:600}]}>
+                            Đăng nhập
+                        </Text> 
+                    </Pressable>
+                </View>
+           </View>
+        </ScreenWrapper>
+    );
+}
+
+export default SignUp;
+
+const style = StyleSheet.create({
+    container: {
+        flex: 1,
+        gap: 45,
+        paddingHorizontal: wp(5),
+    },
+    welcomeText: {
+        fontSize: hp(4),
+        fontWeight: 'bold',
+        color: theme.colors.text,
+    },
+    form: {
+        gap: 25,
+    },
+    forgotPassword:{
+        textAlign: 'right',
+        fontWeight:600,
+        color: theme.colors.text
+    },
+    footer:{
+        flexDirection:'row',
+        justifyContent:'center',
+        alignItems:'center',
+        gap : 5
+    },
+    button: {
+        alignSelf: 'flex-start',
+        padding: 5,
+        borderRadius: theme.radius.sm,
+        backgroundColor: 'rgba(0,0,0,0.07)',
+    },
+    footerText: {
+        fontSize: hp(2), // Kích thước chữ footer
+        color: theme.colors.text, // Màu chữ footer
+    },
+});

@@ -3,8 +3,11 @@ import { View, Text, StatusBar, StyleSheet, Image, Pressable } from "react-nativ
 import { wp, hp } from '../helpers/common';
 import { theme } from "../constants/theme";
 import { Button } from "@/components/Button";
+import { useRouter } from 'expo-router';
+
 
 const Welcome = () => {
+    const router = useRouter();
     return (
         <ScreenWrapper>
             <StatusBar barStyle="dark-content" />
@@ -23,13 +26,13 @@ const Welcome = () => {
                     <Button
                         title="Getting Started"
                         buttonStyle={{ marginHorizontal: wp(3) }}
-                        onPress={() => {}}
+                        onPress={() => router.push('/signUp')}
                     />
                     <View style={styles.bottomTextContainer}>
                         <Text style={styles.loginText}>
                             Bạn đã có tài khoản
                         </Text>
-                        <Pressable>
+                        <Pressable onPress={()=>router.push('/login')}>
                             <Text
                                 style={[
                                     styles.loginText,

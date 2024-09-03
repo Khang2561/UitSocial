@@ -12,7 +12,7 @@ const Index = () => {
             <Text>Index</Text>
             <Button
                 title="Welcome"
-                onPress={() => router.push('welcome')}
+                onPress={() => router.push('/welcome')}
             />
         </ScreenWrapper>
     );
