@@ -9,6 +9,7 @@ import { useRouter } from "expo-router";
 import { wp, hp } from '../helpers/common';
 import Input from "@/components/Input";
 import Button from "@/components/Button";
+import {supabase} from '../lib/supabase'
 
 const Login = () => {
     const router = useRouter();
@@ -20,6 +21,22 @@ const Login = () => {
             Alert.alert('Login', "Bạn phải điền đầy đủ thông tin");
             return;
         }
+
+        let emailLog = email.trim();
+        let passwordLog = password.trim();
+        setLoading(true);
+        const {error} = await supabase.auth.signInWithPassword({
+            email,
+            password
+        });
+
+        setLoading(false);
+
+        console.log('error:',error);
+        if(error){
+            Alert.alert('Login',error.message);
+        }
+
     }
 
     return (
