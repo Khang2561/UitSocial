@@ -43,7 +43,7 @@ const Welcome = () => {
                                     },
                                 ]}
                             >
-                                Đăng kí
+                                Đăng nhập 
                             </Text>
                         </Pressable>
                     </View>
