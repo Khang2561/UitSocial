@@ -5,7 +5,7 @@ import { theme } from '../constants/theme';
 import { Image } from 'expo-image';
 
 interface AvatarProps {
-    uri: string;
+    uri: any;
     size?: number;
     rounded?: number;
     style?: StyleProp<ImageStyle>;

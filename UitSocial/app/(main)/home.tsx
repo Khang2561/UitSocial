@@ -1,5 +1,5 @@
 import { Alert, StyleSheet, Text, View, Button, Image, Pressable } from "react-native";
-import React from "react";
+import React, { useEffect } from "react";
 import ScreenWrapper from "../../components/ScreenWrapprer";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from '../../lib/supabase';
@@ -9,13 +9,35 @@ import Icon from 'react-native-vector-icons/EvilIcons';
 import Icon1 from 'react-native-vector-icons/Feather';
 import { useRouter } from "expo-router";
 import Avatar from "@/components/Avatar";
-import { getUserImageSrc } from "@/services/imageService";
 
 const Home = () => {
     const { user, setAuth } = useAuth();
     const router = useRouter();
-    const uri: string = getUserImageSrc(user?.imageUrl); 
-    console.log('user : ', user);
+    const defaultAvatar = 'https://topsao.vn/wp-content/uploads/2018/04/23/Link-Ka-h--t-Ng-----i---m-ph----05.jpg';
+
+    // Đặt URI cho Avatar
+    const uri = user?.image ? user.image : defaultAvatar;
+
+    // Cập nhật thông tin người dùng nếu image là null
+    useEffect(() => {
+        if (user && !user.image) {
+            // Cập nhật user với ảnh mặc định
+            const updateUserImage = async () => {
+                const { data, error } = await supabase
+                    .from('users')
+                    .update({ image: defaultAvatar })
+                    .match({ id: user.id });
+
+                if (error) {
+                    console.error('Error updating user image:', error);
+                } else {
+                    console.log('User image updated successfully:', data);
+                }
+            };
+
+            updateUserImage();
+        }
+    }, [user]);
 
     const onLogout = async () => {
         const { error } = await supabase.auth.signOut();
@@ -27,12 +49,12 @@ const Home = () => {
     };
 
     return (
-        <ScreenWrapper>
+        <ScreenWrapper bg='white'>
             <View style={styles.container}>
                 {/*Header */}
                 <View style={styles.header}>
                     <Image
-                        source={require('../../assets/images/UitLogo.jpeg')}  
+                        source={require('../../assets/images/UitLogo.jpeg')}
                         style={styles.logo}
                     />
                     <Text style={styles.title}>UitSocial</Text>
@@ -44,13 +66,11 @@ const Home = () => {
                             <Icon1 name="plus-square" size={hp(3.2)} />
                         </Pressable>
                         <Pressable onPress={() => router.push('/(main)/profile')}>
-                            {/* <Icon name="user" size={hp(3.8)} /> */}
                             <Avatar
                                 uri={uri}
-                                //uri={'https://topsao.vn/wp-content/uploads/2018/04/23/Link-Ka-h--t-Ng-----i---m-ph----05.jpg'}
                                 size={hp(4.3)}
                                 rounded={theme.radius.sm}
-                                style={{borderWidth:2}}
+                                style={{ borderWidth: 2 }}
                             />
                         </Pressable>
                     </View>
