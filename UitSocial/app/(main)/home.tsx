@@ -7,10 +7,14 @@ import { theme } from "@/constants/theme";
 import { hp, wp } from '../../helpers/common';
 import Icon from 'react-native-vector-icons/EvilIcons';
 import Icon1 from 'react-native-vector-icons/Feather';
+import { useRouter } from "expo-router";
+import Avatar from "@/components/Avatar";
+import { getUserImageSrc } from "@/services/imageService";
 
 const Home = () => {
     const { user, setAuth } = useAuth();
-
+    const router = useRouter();
+    const uri: string = getUserImageSrc(user?.imageUrl); 
     console.log('user : ', user);
 
     const onLogout = async () => {
@@ -33,14 +37,21 @@ const Home = () => {
                     />
                     <Text style={styles.title}>UitSocial</Text>
                     <View style={styles.icons}>
-                        <Pressable>
+                        <Pressable onPress={() => router.push('/(main)/notifications')}>
                             <Icon name="heart" size={hp(3.8)} />
                         </Pressable>
                         <Pressable>
                             <Icon1 name="plus-square" size={hp(3.2)} />
                         </Pressable>
-                        <Pressable>
-                            <Icon name="user" size={hp(3.8)} />
+                        <Pressable onPress={() => router.push('/(main)/profile')}>
+                            {/* <Icon name="user" size={hp(3.8)} /> */}
+                            <Avatar
+                                uri={uri}
+                                //uri={'https://topsao.vn/wp-content/uploads/2018/04/23/Link-Ka-h--t-Ng-----i---m-ph----05.jpg'}
+                                size={hp(4.3)}
+                                rounded={theme.radius.sm}
+                                style={{borderWidth:2}}
+                            />
                         </Pressable>
                     </View>
                 </View>
