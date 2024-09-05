@@ -1,23 +1,24 @@
 import { StyleSheet, Text, View, Pressable, Alert } from "react-native";
 import React, { useState } from "react";
 import ScreenWrapper from "@/components/ScreenWrapprer";
-import Icon from 'react-native-vector-icons/Feather'; 
-import Icon1 from 'react-native-vector-icons/MaterialIcons'; 
+import Icon from 'react-native-vector-icons/Feather';
+import Icon1 from 'react-native-vector-icons/MaterialIcons';
 import { theme } from "../constants/theme";
-import { StatusBar } from 'expo-status-bar'; 
+import { StatusBar } from 'expo-status-bar';
 import { useRouter } from "expo-router";
 import { wp, hp } from '../helpers/common';
 import Input from "@/components/Input";
 import Button from "@/components/Button";
-import {supabase} from '../lib/supabase'
+import { supabase } from '../lib/supabase'
 
 const Login = () => {
+
     const router = useRouter();
     const [email, setEmail] = useState(''); // Khai báo state cho email
-    const [password, setPassword] =useState('');
+    const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const onSubmit = async () =>{
-        if(!email || !password){
+    const onSubmit = async () => {
+        if (!email || !password) {
             Alert.alert('Login', "Bạn phải điền đầy đủ thông tin");
             return;
         }
@@ -25,26 +26,26 @@ const Login = () => {
         let emailLog = email.trim();
         let passwordLog = password.trim();
         setLoading(true);
-        const {error} = await supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
             email,
             password
         });
 
         setLoading(false);
 
-        console.log('error:',error);
-        if(error){
-            Alert.alert('Login',error.message);
+        console.log('error:', error);
+        if (error) {
+            Alert.alert('Login', error.message);
         }
 
     }
 
     return (
         <ScreenWrapper bg="white">
-           <StatusBar style="dark" />
-           <View style={style.container}>
+            <StatusBar style="dark" />
+            <View style={style.container}>
                 {/* NÚT NHẤN CALL BACK */}
-                <Pressable onPress={()=>router.push('/welcome')} style={style.button}>
+                <Pressable onPress={() => router.push('/welcome')} style={style.button}>
                     <Icon name="arrow-left" size={24} color={theme.colors.text} />
                 </Pressable>
 
@@ -57,7 +58,7 @@ const Login = () => {
                 {/* FORM */}
                 <View style={style.form}>
                     <Text style={{ fontSize: hp(1.5), color: theme.colors.text }}>
-                        Đăng nhập để tiếp tục 
+                        Đăng nhập để tiếp tục
                     </Text>
                     <Input
                         icon={<Icon name="mail" size={26} />}
@@ -72,24 +73,28 @@ const Login = () => {
                         secureTextEntry
                         value={password} // Đặt giá trị cho TextInput
                     />
-                    <Text style={style.forgotPassword}>
+                    <Text
+                        style={style.forgotPassword}
+                        onPress={() => {
+                            // Điều hướng hoặc xử lý quên mật khẩu ở đây
+                            Alert.alert('Quên mật khẩu', 'Tính năng này chưa được triển khai!');
+                        }}>
                         Bạn quên mật khẩu ?
                     </Text>
-                    {/*Button*/}
-                    <Button title={'Đăng nhập'} loading={loading} onPress={onSubmit}/>
+                    <Button title={'Đăng nhập'} loading={loading} onPress={onSubmit} />
                 </View>
                 {/*Footer*/}
                 <View style={style.footer}>
                     <Text style={style.footerText}>
-                        Không có tài khoảng 
+                        Không có tài khoảng
                     </Text>
-                    <Pressable onPress={()=>router.push('/signUp')}>
-                        <Text style={[style.footerText,{color:theme.colors.primaryDark, fontWeight:600}]}>
-                            Đăng kí 
-                        </Text> 
+                    <Pressable onPress={() => router.push('/signUp')}>
+                        <Text style={[style.footerText, { color: theme.colors.primaryDark, fontWeight: 600 }]}>
+                            Đăng kí
+                        </Text>
                     </Pressable>
                 </View>
-           </View>
+            </View>
         </ScreenWrapper>
     );
 }
@@ -110,16 +115,16 @@ const style = StyleSheet.create({
     form: {
         gap: 25,
     },
-    forgotPassword:{
+    forgotPassword: {
         textAlign: 'right',
-        fontWeight:600,
+        fontWeight: '600',
         color: theme.colors.text
     },
-    footer:{
-        flexDirection:'row',
-        justifyContent:'center',
-        alignItems:'center',
-        gap : 5
+    footer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 5
     },
     button: {
         alignSelf: 'flex-start',
