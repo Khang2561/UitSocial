@@ -17,10 +17,10 @@ const MainLayout = () => {
     const { setAuth, setUserData } = useAuth(); // Import useAuth
     const router = useRouter();
 
-    const updateUserData = async (user:any) =>{
+    const updateUserData = async (user:any,email:any) =>{
         let res = await getUserData(user?.id);
         if(res.success){
-            setUserData(res.data);
+            setUserData({...res.data,email});
         }
     }
 
@@ -30,7 +30,8 @@ const MainLayout = () => {
 
             if (session?.user) {
                 setAuth(session.user);
-                updateUserData(session?.user);
+                updateUserData(session?.user,session?.user.email);
+                console.log('auth user : ',session?.user?.email);
                 console.log('Navigating to /home');
                 router.replace('/(main)/home');
             } else {

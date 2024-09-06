@@ -14,10 +14,9 @@ const Home = () => {
     const { user, setAuth } = useAuth();
     const router = useRouter();
     const defaultAvatar = 'https://topsao.vn/wp-content/uploads/2018/04/23/Link-Ka-h--t-Ng-----i---m-ph----05.jpg';
-
+    console.log('user: ',user);
     // Đặt URI cho Avatar
     const uri = user?.image ? user.image : defaultAvatar;
-
     // Cập nhật thông tin người dùng nếu image là null
     useEffect(() => {
         if (user && !user.image) {
@@ -39,14 +38,7 @@ const Home = () => {
         }
     }, [user]);
 
-    const onLogout = async () => {
-        const { error } = await supabase.auth.signOut();
-        if (error) {
-            Alert.alert('Đăng xuất', 'Lỗi đăng xuất');
-        } else {
-            setAuth(null); // Optional: clear the authentication context if needed
-        }
-    };
+    
 
     return (
         <ScreenWrapper bg='white'>
@@ -76,7 +68,6 @@ const Home = () => {
                     </View>
                 </View>
             </View>
-            <Button title="Đăng xuất" onPress={onLogout} />
         </ScreenWrapper>
     );
 };

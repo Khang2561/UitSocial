@@ -11,7 +11,7 @@ interface HeaderProps {
   children?: React.ReactNode; // Thêm thuộc tính children
 }
 
-const Header = ({ title, showBackButton = false, children }: HeaderProps) => {
+const Header = ({ title, showBackButton = true, children }: HeaderProps) => {
   const router = useRouter();
 
   return (
