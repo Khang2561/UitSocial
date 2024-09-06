@@ -12,6 +12,7 @@ import { theme } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
 import Avatar from '@/components/Avatar';
 import { User } from '../../entity/User';
+import Icon3 from 'react-native-vector-icons/Entypo';
 
 
 // Định nghĩa kiểu cho props của UserHeader
@@ -100,7 +101,7 @@ const UserHeader = ({ user, router, handleLogout }: UserHeaderProps) => {
                 {user && user.email ? user.email : 'email@default.com'}
               </Text>
             </View>
-            {/*email*/}
+            {/*phone*/}
             {
               user && user.phoneNumber && (
                 <View style={styles.info}>
@@ -111,9 +112,27 @@ const UserHeader = ({ user, router, handleLogout }: UserHeaderProps) => {
                 </View>
               )
             }
-
+            {/*address */}
+            {
+              user && user.address && (
+                <View style={styles.info}>
+                  <Icon3 name="location" size={20} color={theme.colors.textLight} />
+                  <Text style={styles.infoText}>
+                    {user && user.address ? user.address : 'xxxxxxxxxxxxxx'}
+                  </Text>
+                </View>
+              )
+            }
             {/*bio */}
-            
+            {
+              user && user.bio && (
+                <View style={styles.info}>
+                  <Text style={styles.infoText}>
+                    {user && user.bio ? user.bio : 'xxxxxxxxxxxxxx'}
+                  </Text>
+                </View>
+              )
+            }
             {/*Các thông tin sau này*/}
 
           </View>
