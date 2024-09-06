@@ -13,6 +13,7 @@ import { supabase } from '@/lib/supabase';
 import Avatar from '@/components/Avatar';
 import { User } from '../../entity/User';
 import Icon3 from 'react-native-vector-icons/Entypo';
+import {getSupabaseFileUrl} from '../../services/imageService';
 
 
 // Định nghĩa kiểu cho props của UserHeader
@@ -63,6 +64,9 @@ const Profile = () => {
 
 // Hình ảnh user 
 const UserHeader = ({ user, router, handleLogout }: UserHeaderProps) => {
+  const imageUrl = getSupabaseFileUrl(user?.image);
+  
+  console.log('Đường link hình ảnh:', imageUrl); 
   return (
     <View style={styles.headerContainer}>
       {/*Header profile */}
@@ -77,7 +81,7 @@ const UserHeader = ({ user, router, handleLogout }: UserHeaderProps) => {
           {/*profile image*/}
           <View style={styles.avatarContainer}>
             <Avatar
-              uri={user?.image}
+              uri={getSupabaseFileUrl(user?.image)}
               size={hp(12)}
               rounded={theme.radius.xxl * 1.4}
             />
@@ -140,6 +144,7 @@ const UserHeader = ({ user, router, handleLogout }: UserHeaderProps) => {
         </View>
       </View>
     </View>
+    
   );
 }
 

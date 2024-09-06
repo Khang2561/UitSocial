@@ -1,22 +1,25 @@
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native"
-import React, { useEffect, useState } from 'react'
-import ScreenWrapper from "@/components/ScreenWrapprer"
-import { hp, wp } from '../../helpers/common'
-import { theme } from '../../constants/theme'
-import Header from "@/components/Header"
-import { useAuth } from "@/contexts/AuthContext"
-import { Image } from "expo-image"
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import React, { useEffect, useState } from 'react';
+import ScreenWrapper from "@/components/ScreenWrapprer";
+import { hp, wp } from '../../helpers/common';
+import { theme } from '../../constants/theme';
+import Header from "@/components/Header";
+import { useAuth } from "@/contexts/AuthContext";
+import { Image } from "expo-image";
 import Icon from 'react-native-vector-icons/EvilIcons';
-import Input from "@/components/Input"
+import Input from "@/components/Input";
 import { User } from "../../entity/User";
 import Icon2 from 'react-native-vector-icons/Feather';
 import Icon3 from 'react-native-vector-icons/Entypo';
-import Button from "@/components/Button"
-import { updateUser } from "@/services/userService"
-import { router, useRouter } from "expo-router"
-const EditProfile = () => {
+import Button from "@/components/Button";
+import { updateUser } from "@/services/userService";
+import { useRouter } from "expo-router";
+import * as ImagePicker from 'expo-image-picker';
+import { getUserImageSrc, uploadFile } from "@/services/imageService";
+import {getSupabaseFileUrl} from '../../services/imageService';
 
-    const { user: currentUser,setUserData } = useAuth();
+const EditProfile = () => {
+    const { user: currentUser, setUserData } = useAuth();
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
@@ -43,37 +46,67 @@ const EditProfile = () => {
             });
         }
     }, [currentUser]);
-    //function
-    const onPickImage = async () => {
-        
-    }
 
-    const onSubmit = async () =>{
-        let userData = {...user};
-        let {name, phoneNumber, address, image, bio} = userData;
-        if(!name || !phoneNumber || !address || !bio){
-            Alert.alert('Profile',"Vui lòng điền đầy đủ thông tin")
+    const onPickImage = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 0.7,
+        });
+
+        if (!result.canceled) {
+            setUser({ ...user, image: result.assets[0].uri });
+        }
+    };
+
+    const onSubmit = async () => {
+        let userData = { ...user };
+        let { name, phoneNumber, address, image, bio } = userData;
+        if (!name || !phoneNumber || !address || !bio || !image) {
+            Alert.alert('Profile', "Vui lòng điền đầy đủ thông tin");
             return;
         }
         setLoading(true);
-        //update user
-        const res = await updateUser(currentUser?.id,userData);
+        if (typeof image === 'string') {
+            // Upload to image
+            let imageRes = await uploadFile('profiles', image, true);
+            if (imageRes.success) {
+                userData.image = imageRes.data;
+            } else {
+                userData.image = null;
+            }
+        }
+        // Update user
+        const res = await updateUser(currentUser?.id, userData);
         setLoading(false);
-        if(res.success){
-            setUserData({...currentUser, ...userData})
+        if (res.success) {
+            setUserData({ ...currentUser, ...userData });
             router.back();
         }
-    }
+    };
+
+    let imageSource;
+if (user.image && user.image.startsWith('file')) {
+    // Nếu là đường dẫn cục bộ, sử dụng trực tiếp URI
+    imageSource = { uri: user.image };
+} else if (user.image) {
+    // Nếu không phải là đường dẫn cục bộ, lấy URL từ Supabase
+    imageSource = { uri: getSupabaseFileUrl(user.image) };
+} else {
+    // Sử dụng hình ảnh mặc định nếu không có
+    imageSource = getUserImageSrc(user.image);
+}
+    console.log("HIne thi o edit : ",getSupabaseFileUrl(imageSource));
 
     return (
         <ScreenWrapper bg="white">
             <View style={style.container}>
                 <ScrollView style={{ flex: 1 }}>
                     <Header title="Edit Profile" />
-                    {/*form*/}
                     <View style={style.form}>
                         <View style={style.avatarContainer}>
-                            <Image source={user?.image} style={style.avatar} />
+                            <Image source={imageSource} style={style.avatar} />
                             <Pressable style={style.cameraIcon} onPress={onPickImage}>
                                 <Icon name="camera" size={20} />
                             </Pressable>
@@ -102,20 +135,19 @@ const EditProfile = () => {
                         <Input
                             placeholder="Nhập vào bio"
                             value={user.bio}
-                            multiline ={true}
+                            multiline={true}
                             containerStyles={style.bio}
                             onChangeText={(value: string) => setUser({ ...user, bio: value })}
                         />
-                        {/*nút summit */}
-                        <Button title="Cập nhập" loading={loading} onPress={onSubmit}/>
+                        <Button title="Cập nhật" loading={loading} onPress={onSubmit} />
                     </View>
                 </ScrollView>
             </View>
         </ScreenWrapper>
-    )
-}
+    );
+};
 
-export default EditProfile
+export default EditProfile;
 
 const style = StyleSheet.create({
     container: {
@@ -131,7 +163,6 @@ const style = StyleSheet.create({
         width: '100%',
         height: '100%',
         borderRadius: theme.radius.xxl * 1.8,
-        borderCurve: 'continuous',
         borderWidth: 1,
         borderColor: theme.colors.darkLight
     },
@@ -163,4 +194,4 @@ const style = StyleSheet.create({
         alignItems: 'flex-start',
         paddingVertical: 15
     }
-})
+});

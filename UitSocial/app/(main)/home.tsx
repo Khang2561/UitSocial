@@ -1,44 +1,21 @@
-import { Alert, StyleSheet, Text, View, Button, Image, Pressable } from "react-native";
-import React, { useEffect } from "react";
+import { Alert, StyleSheet, Text, View, Image, Pressable } from "react-native";
+import React from "react";
 import ScreenWrapper from "../../components/ScreenWrapprer";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from '../../lib/supabase';
 import { theme } from "@/constants/theme";
 import { hp, wp } from '../../helpers/common';
 import Icon from 'react-native-vector-icons/EvilIcons';
 import Icon1 from 'react-native-vector-icons/Feather';
 import { useRouter } from "expo-router";
 import Avatar from "@/components/Avatar";
+import { getSupabaseFileUrl } from '../../services/imageService';  // Import hàm getSupabaseFileUrl
 
 const Home = () => {
-    const { user, setAuth } = useAuth();
+    const { user } = useAuth();
     const router = useRouter();
-    const defaultAvatar = 'https://topsao.vn/wp-content/uploads/2018/04/23/Link-Ka-h--t-Ng-----i---m-ph----05.jpg';
-    console.log('user: ',user);
-    // Đặt URI cho Avatar
-    const uri = user?.image ? user.image : defaultAvatar;
-    // Cập nhật thông tin người dùng nếu image là null
-    useEffect(() => {
-        if (user && !user.image) {
-            // Cập nhật user với ảnh mặc định
-            const updateUserImage = async () => {
-                const { data, error } = await supabase
-                    .from('users')
-                    .update({ image: defaultAvatar })
-                    .match({ id: user.id });
-
-                if (error) {
-                    console.error('Error updating user image:', error);
-                } else {
-                    console.log('User image updated successfully:', data);
-                }
-            };
-
-            updateUserImage();
-        }
-    }, [user]);
-
     
+    // Use getSupabaseFileUrl to get a proper URL for the image
+    const uri = user?.image ? getSupabaseFileUrl(user.image) : null;
 
     return (
         <ScreenWrapper bg='white'>
@@ -59,7 +36,7 @@ const Home = () => {
                         </Pressable>
                         <Pressable onPress={() => router.push('/(main)/profile')}>
                             <Avatar
-                                uri={uri}
+                                uri={uri}  // Ensure uri is a proper URL
                                 size={hp(4.3)}
                                 rounded={theme.radius.sm}
                                 style={{ borderWidth: 2 }}
