@@ -31,7 +31,7 @@ const Home = () => {
                         <Pressable onPress={() => router.push('/(main)/notifications')}>
                             <Icon name="heart" size={hp(3.8)} />
                         </Pressable>
-                        <Pressable>
+                        <Pressable onPress={()=> router.push('/(main)/newPost')}>
                             <Icon1 name="plus-square" size={hp(3.2)} />
                         </Pressable>
                         <Pressable onPress={() => router.push('/(main)/profile')}>
