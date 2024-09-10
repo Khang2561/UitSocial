@@ -12,11 +12,13 @@ import Button from "@/components/Button";
 import { supabase } from '../lib/supabase'
 
 const Login = () => {
-
+    //-------------------------CONST------------------------------------------------------
     const router = useRouter();
     const [email, setEmail] = useState(''); // Khai báo state cho email
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+
+    //-------------------------Function------------------------------------------------------
     const onSubmit = async () => {
         if (!email || !password) {
             Alert.alert('Login', "Bạn phải điền đầy đủ thông tin");
@@ -40,6 +42,7 @@ const Login = () => {
 
     }
 
+    //-------------------------Main------------------------------------------------------
     return (
         <ScreenWrapper bg="white">
             <StatusBar style="dark" />
@@ -101,6 +104,7 @@ const Login = () => {
 
 export default Login;
 
+//-------------------------CSS------------------------------------------------------
 const style = StyleSheet.create({
     container: {
         flex: 1,

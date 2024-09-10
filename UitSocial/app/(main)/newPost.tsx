@@ -17,6 +17,7 @@ import { createOrUpdatePost } from '@/services/postService';
 import { RichEditor } from 'react-native-pell-rich-editor';
 
 const NewPost = () => {
+  //-------------------------CONST------------------------------------------------------
   const { user } = useAuth();
   const bodyRef = useRef("");
   const editorRef = useRef<RichEditor | null>(null);
@@ -25,6 +26,7 @@ const NewPost = () => {
   const [file, setFile] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const uri = user?.image ? getSupabaseFileUrl(user.image) : null;
 
+  //-------------------------Function------------------------------------------------------
   const onPick = async (isImage: boolean) => {
     let mediaConfig: ImagePicker.ImagePickerOptions = {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -97,6 +99,7 @@ const NewPost = () => {
     }
   };
 
+  //-------------------------Main------------------------------------------------------
   return (
     <ScreenWrapper bg="white">
       <View style={styles.container}>
@@ -179,7 +182,7 @@ const NewPost = () => {
     </ScreenWrapper>
   );
 }
-
+//-------------------------CSS------------------------------------------------------
 const styles = StyleSheet.create({
   container: {
     flex: 1,

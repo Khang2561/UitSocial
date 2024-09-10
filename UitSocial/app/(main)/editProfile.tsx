@@ -16,9 +16,10 @@ import { updateUser } from "@/services/userService";
 import { useRouter } from "expo-router";
 import * as ImagePicker from 'expo-image-picker';
 import { getUserImageSrc, uploadFile } from "@/services/imageService";
-import {getSupabaseFileUrl} from '../../services/imageService';
+import { getSupabaseFileUrl } from '../../services/imageService';
 
 const EditProfile = () => {
+    //-------------------------CONST------------------------------------------------------
     const { user: currentUser, setUserData } = useAuth();
     const [loading, setLoading] = useState(false);
     const router = useRouter();
@@ -33,6 +34,7 @@ const EditProfile = () => {
         bio: currentUser?.bio || '',
     });
 
+    //-------------------------Function------------------------------------------------------
     useEffect(() => {
         if (currentUser) {
             setUser({
@@ -46,7 +48,7 @@ const EditProfile = () => {
             });
         }
     }, [currentUser]);
-
+    //hàm chọn ảnh
     const onPickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -59,7 +61,7 @@ const EditProfile = () => {
             setUser({ ...user, image: result.assets[0].uri });
         }
     };
-
+    //sử lý sự kiện summit
     const onSubmit = async () => {
         let userData = { ...user };
         let { name, phoneNumber, address, image, bio } = userData;
@@ -86,19 +88,21 @@ const EditProfile = () => {
         }
     };
 
+    //sử lí chọn hình mới 
     let imageSource;
-if (user.image && user.image.startsWith('file')) {
-    // Nếu là đường dẫn cục bộ, sử dụng trực tiếp URI
-    imageSource = { uri: user.image };
-} else if (user.image) {
-    // Nếu không phải là đường dẫn cục bộ, lấy URL từ Supabase
-    imageSource = { uri: getSupabaseFileUrl(user.image) };
-} else {
-    // Sử dụng hình ảnh mặc định nếu không có
-    imageSource = getUserImageSrc(user.image);
-}
-    console.log("HIne thi o edit : ",getSupabaseFileUrl(imageSource));
+    if (user.image && user.image.startsWith('file')) {
+        // Nếu là đường dẫn cục bộ, sử dụng trực tiếp URI
+        imageSource = { uri: user.image };
+    } else if (user.image) {
+        // Nếu không phải là đường dẫn cục bộ, lấy URL từ Supabase
+        imageSource = { uri: getSupabaseFileUrl(user.image) };
+    } else {
+        // Sử dụng hình ảnh mặc định nếu không có
+        imageSource = getUserImageSrc(user.image);
+    }
+    console.log("HIne thi o edit : ", getSupabaseFileUrl(imageSource));
 
+    //-------------------------Main------------------------------------------------------
     return (
         <ScreenWrapper bg="white">
             <View style={style.container}>
@@ -148,7 +152,7 @@ if (user.image && user.image.startsWith('file')) {
 };
 
 export default EditProfile;
-
+//-------------------------CSS------------------------------------------------------
 const style = StyleSheet.create({
     container: {
         flex: 1,

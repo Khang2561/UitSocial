@@ -14,6 +14,7 @@ import Button from "@/components/Button";
 import { supabase } from "../lib/supabase";
 
 const SignUp = () => {
+    //-------------------------CONST------------------------------------------------------
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [name, setName] = useState('');
@@ -23,6 +24,7 @@ const SignUp = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+    //-------------------------Function------------------------------------------------------
     const onSubmit = async () => {
         if (!email || !password || !name || !confirmPassword) {
             Alert.alert('Đăng kí', "Bạn phải điền đầy đủ thông tin");
@@ -60,6 +62,7 @@ const SignUp = () => {
         }
     };
 
+    //-------------------------Main------------------------------------------------------
     return (
         <ScreenWrapper bg="white">
            <StatusBar style="dark" />
@@ -150,7 +153,7 @@ const SignUp = () => {
 };
 
 export default SignUp;
-
+//-------------------------CSS------------------------------------------------------
 const style = StyleSheet.create({
     container: {
         flex: 1,

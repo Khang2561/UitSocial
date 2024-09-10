@@ -11,10 +11,7 @@ interface PostErrorResponse {
     msg: string;
 }
 
-
-
 type CreateOrUpdatePostResponse = PostSuccessResponse | PostErrorResponse;
-
 
 export const createOrUpdatePost = async (post: any): Promise<CreateOrUpdatePostResponse> => {
     try {
@@ -52,4 +49,31 @@ export const createOrUpdatePost = async (post: any): Promise<CreateOrUpdatePostR
         return { success: false, msg: 'Không thể tạo bài post 2' };
     }
 }
+
+export const fetchPosts = async (limit = 10) => {
+    try {
+        const { data, error } = await supabase
+            .from('posts')
+            .select(`
+                *,
+                user:users (
+                    id,
+                    name,
+                    image
+                )
+            `)  // Chú ý dấu ngoặc đơn và cách truy vấn các trường liên quan
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+        if (error) {
+            console.log('fetchPost error: ', error);
+            return { success: false, msg: 'Không thể fetchPosts' };
+        }
+        return { success: true, data };
+    } catch (error) {
+        console.log('fetchPosts: ', error);
+        return { success: false, msg: 'Không thể fetchPosts' };
+    }
+};
+
 

@@ -13,9 +13,9 @@ import { supabase } from '@/lib/supabase';
 import Avatar from '@/components/Avatar';
 import { User } from '../../entity/User';
 import Icon3 from 'react-native-vector-icons/Entypo';
-import {getSupabaseFileUrl} from '../../services/imageService';
+import { getSupabaseFileUrl } from '../../services/imageService';
 
-
+//-------------------------CONST------------------------------------------------------
 // Định nghĩa kiểu cho props của UserHeader
 interface UserHeaderProps {
   user: User | null;
@@ -23,6 +23,7 @@ interface UserHeaderProps {
   handleLogout: () => void;
 }
 
+//-------------------------Function------------------------------------------------------
 const Profile = () => {
   const { user, setAuth } = useAuth();
   const router = useRouter();
@@ -55,6 +56,93 @@ const Profile = () => {
     );
   };
 
+  // Hình ảnh user 
+  const UserHeader = ({ user, router, handleLogout }: UserHeaderProps) => {
+    const imageUrl = getSupabaseFileUrl(user?.image);
+
+    console.log('Đường link hình ảnh:', imageUrl);
+    return (
+      <View style={styles.headerContainer}>
+        {/*Header profile */}
+        <Header title="Profile">
+          <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+            <Icon1 name="logout" color={theme.colors.rose} size={24} />
+          </TouchableOpacity>
+        </Header>
+        {/*main*/}
+        <View style={styles.container}>
+          <View style={{ gap: 15 }}>
+            {/*profile image*/}
+            <View style={styles.avatarContainer}>
+              <Avatar
+                uri={getSupabaseFileUrl(user?.image)}
+                size={hp(12)}
+                rounded={theme.radius.xxl * 1.4}
+              />
+              <Pressable style={styles.editIcon} onPress={() => router.push('/(main)/editProfile')}>
+                <Icon name="edit" size={20} />
+              </Pressable>
+            </View>
+
+            {/*info user */}
+            <View style={{ alignItems: 'center', gap: 4 }}>
+              <Text style={styles.userName}>{user && user.name ? user.name : 'User'}</Text>
+              <Text style={styles.infoText}>Khoa khoa học và kĩ thuật máy tính</Text>
+            </View>
+
+            {/*email, phone, bio */}
+            <View style={{ gap: 10 }}>
+              {/*email*/}
+              <View style={styles.info}>
+                <Icon1 name="email" size={20} color={theme.colors.textLight} />
+                <Text style={styles.infoText}>
+                  {user && user.email ? user.email : 'email@default.com'}
+                </Text>
+              </View>
+              {/*phone*/}
+              {
+                user && user.phoneNumber && (
+                  <View style={styles.info}>
+                    <Icon2 name="phone-call" size={20} color={theme.colors.textLight} />
+                    <Text style={styles.infoText}>
+                      {user && user.phoneNumber ? user.phoneNumber : 'xxxxxxxxxxxxxx'}
+                    </Text>
+                  </View>
+                )
+              }
+              {/*address */}
+              {
+                user && user.address && (
+                  <View style={styles.info}>
+                    <Icon3 name="location" size={20} color={theme.colors.textLight} />
+                    <Text style={styles.infoText}>
+                      {user && user.address ? user.address : 'xxxxxxxxxxxxxx'}
+                    </Text>
+                  </View>
+                )
+              }
+              {/*bio */}
+              {
+                user && user.bio && (
+                  <View style={styles.info}>
+                    <Text style={styles.infoText}>
+                      {user && user.bio ? user.bio : 'xxxxxxxxxxxxxx'}
+                    </Text>
+                  </View>
+                )
+              }
+              {/*Các thông tin sau này*/}
+
+            </View>
+
+          </View>
+        </View>
+      </View>
+
+    );
+  }
+
+  //-------------------------Main------------------------------------------------------
   return (
     <ScreenWrapper bg="white">
       <UserHeader user={user} router={router} handleLogout={handleLogout} />
@@ -62,94 +150,10 @@ const Profile = () => {
   );
 };
 
-// Hình ảnh user 
-const UserHeader = ({ user, router, handleLogout }: UserHeaderProps) => {
-  const imageUrl = getSupabaseFileUrl(user?.image);
-  
-  console.log('Đường link hình ảnh:', imageUrl); 
-  return (
-    <View style={styles.headerContainer}>
-      {/*Header profile */}
-      <Header title="Profile">
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Icon1 name="logout" color={theme.colors.rose} size={24} />
-        </TouchableOpacity>
-      </Header>
-      {/*main*/}
-      <View style={styles.container}>
-        <View style={{ gap: 15 }}>
-          {/*profile image*/}
-          <View style={styles.avatarContainer}>
-            <Avatar
-              uri={getSupabaseFileUrl(user?.image)}
-              size={hp(12)}
-              rounded={theme.radius.xxl * 1.4}
-            />
-            <Pressable style={styles.editIcon} onPress={() => router.push('/(main)/editProfile')}>
-              <Icon name="edit" size={20} />
-            </Pressable>
-          </View>
 
-          {/*info user */}
-          <View style={{ alignItems: 'center', gap: 4 }}>
-            <Text style={styles.userName}>{user && user.name ? user.name : 'User'}</Text>
-            <Text style={styles.infoText}>Khoa khoa học và kĩ thuật máy tính</Text>
-          </View>
-
-          {/*email, phone, bio */}
-          <View style={{ gap: 10 }}>
-            {/*email*/}
-            <View style={styles.info}>
-              <Icon1 name="email" size={20} color={theme.colors.textLight} />
-              <Text style={styles.infoText}>
-                {user && user.email ? user.email : 'email@default.com'}
-              </Text>
-            </View>
-            {/*phone*/}
-            {
-              user && user.phoneNumber && (
-                <View style={styles.info}>
-                  <Icon2 name="phone-call" size={20} color={theme.colors.textLight} />
-                  <Text style={styles.infoText}>
-                    {user && user.phoneNumber ? user.phoneNumber : 'xxxxxxxxxxxxxx'}
-                  </Text>
-                </View>
-              )
-            }
-            {/*address */}
-            {
-              user && user.address && (
-                <View style={styles.info}>
-                  <Icon3 name="location" size={20} color={theme.colors.textLight} />
-                  <Text style={styles.infoText}>
-                    {user && user.address ? user.address : 'xxxxxxxxxxxxxx'}
-                  </Text>
-                </View>
-              )
-            }
-            {/*bio */}
-            {
-              user && user.bio && (
-                <View style={styles.info}>
-                  <Text style={styles.infoText}>
-                    {user && user.bio ? user.bio : 'xxxxxxxxxxxxxx'}
-                  </Text>
-                </View>
-              )
-            }
-            {/*Các thông tin sau này*/}
-
-          </View>
-
-        </View>
-      </View>
-    </View>
-    
-  );
-}
 
 export default Profile;
-
+//-------------------------CSS------------------------------------------------------
 const styles = StyleSheet.create({
   //Header 
   headerContainer: {
