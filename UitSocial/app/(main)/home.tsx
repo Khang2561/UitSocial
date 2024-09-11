@@ -12,6 +12,8 @@ import { getSupabaseFileUrl } from '../../services/imageService';
 import { fetchPosts } from "@/services/postService";
 import PostCard from '../../components/PostCard'
 import Loading from "@/components/Loading";
+import { supabase } from "@/lib/supabase";
+import { getUserData } from "@/services/userService";
 var limit = 0;
 
 const Home = () => {
@@ -20,9 +22,26 @@ const Home = () => {
     const router = useRouter(); // router để chuyển trang 
     const uri = user?.image ? getSupabaseFileUrl(user.image) : null;// lấy link ảnh cho hình đại diện 
     const [posts, setPosts] = useState<any[]>([]); //hàm chứ post 
+    const handlePostEvent = async(payload:any)=>{
+        if(payload.event == 'INSERT && payload?.new?.id'){
+            let newPost ={...payload.new};
+            let res = await getUserData(newPost.userId);
+            newPost.user=res.success?res.data:{};
+            setPosts(prevPosts=>[newPost,...prevPosts]);
+        }
+    }
     //-------------------------Function------------------------------------------------------
     useEffect(()=>{
+        let postChannel = supabase
+        .channel('posts')
+        .on('postgres_changes',{event:'*',schema:'public',table:'post'},handlePostEvent)
+        .subscribe();
+
         getPosts();
+
+        return () =>{
+            supabase.removeChannel(postChannel);
+        }
     },[])
 
     //hàm lấy api của bài post 

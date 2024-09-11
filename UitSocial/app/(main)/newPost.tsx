@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Image, Pressable, Alert } from 'react-native'
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Image, Pressable, Alert, LogBox } from 'react-native'
 import React, { useRef, useState } from 'react'
 import ScreenWrapper from '../../components/ScreenWrapprer';
 import Header from '@/components/Header';
@@ -16,6 +16,7 @@ import { Video, ResizeMode } from 'expo-av'
 import { createOrUpdatePost } from '@/services/postService';
 import { RichEditor } from 'react-native-pell-rich-editor';
 
+LogBox.ignoreLogs(['Toolbar has no editor'])
 const NewPost = () => {
   //-------------------------CONST------------------------------------------------------
   const { user } = useAuth();
