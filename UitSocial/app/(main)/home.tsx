@@ -11,6 +11,7 @@ import Avatar from "@/components/Avatar";
 import { getSupabaseFileUrl } from '../../services/imageService';  
 import { fetchPosts } from "@/services/postService";
 import PostCard from '../../components/PostCard'
+import Loading from "@/components/Loading";
 var limit = 0;
 
 const Home = () => {
@@ -78,6 +79,11 @@ const Home = () => {
                         currentUser={user}
                         router={router}
                     />}
+                    ListFooterComponent={(
+                        <View style={{marginVertical:posts.length==0?200:30}}>
+                            <Loading/>
+                        </View>
+                    )}
                 />
                  {/*********************show post*********************/}
             </View>

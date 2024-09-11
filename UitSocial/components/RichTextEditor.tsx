@@ -32,8 +32,8 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ editorRef, onChange }) 
           [actions.heading1]: ({ tintColor }: { tintColor: string }) => (
             <Text style={{ color: tintColor }}>H1</Text>
           ),
-          [actions.heading2]: ({ tintColor }: { tintColor: string }) => (
-            <Text style={{ color: tintColor }}>H2</Text>
+          [actions.heading4]: ({ tintColor }: { tintColor: string }) => (
+            <Text style={{ color: tintColor }}>H4</Text>
           ),
         }}
         style={styles.richBar}
