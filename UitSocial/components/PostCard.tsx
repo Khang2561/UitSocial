@@ -1,63 +1,134 @@
-import { StyleSheet, Text, TouchableOpacity, View, LogBox, Image } from "react-native";
-import React, { useRef, useState } from 'react';
-import { router } from "expo-router";
+import { StyleSheet, Text, TouchableOpacity, View, LogBox, Image, Alert, Share } from "react-native";
+import React, { useEffect, useState } from 'react';
 import { theme } from "@/constants/theme";
 import { hp, wp } from "@/helpers/common";
 import Avatar from "./Avatar";
-import { getSupabaseFileUrl } from "@/services/imageService";  // Import hàm lấy URI từ Supabase
+import { dowloadFile, getSupabaseFileUrl } from "@/services/imageService";
 import moment from 'moment'
 import Icon from 'react-native-vector-icons/Entypo';
 import Icon1 from 'react-native-vector-icons/FontAwesome';
 import Icon2 from 'react-native-vector-icons/Feather';
 import RenderHtml from 'react-native-render-html'
 import { Video, ResizeMode } from "expo-av";
+import { createPostLike, removePostLike } from "@/services/postService";
+import { stripHtmlTags } from '@/helpers/common'
 
+LogBox.ignoreLogs(['Warning: TNodeChildrenRenderer', 'Warning: MemoizedTNodeRenderer', 'Warning: TRenderEngineProvider']);
+LogBox.ignoreLogs([
+  'WARN  You seem to update props of the "TRenderEngineProvider" component in short periods of time',
+  'Another warning message you want to ignore',
+]);
+type Like = {
+  userId: string;
+  postId: string;
+};
 
-LogBox.ignoreLogs(['Warning: TNodeChildrenRenderer', 'Warning: MemoizedTNodeRenderer', 'Warning: TRenderEngineProvider'])
+type PostLikeResponse = {
+  success: boolean;
+};
+
+type ShareContent = {
+  message: string;
+  url?: string; // Make url optional
+};
+
 const PostCard = ({
   item,
   currentUser,
   router,
   hasShadow = true,
+  showMoreIcon = true,
 }: {
   item: any,
   currentUser: any,
   router: any,
-  hasShadow: boolean
+  hasShadow: boolean,
+  showMoreIcon: boolean
 }) => {
   //-------------------------CONST------------------------------------------------------
-  const userImageUri = item?.user?.image ? getSupabaseFileUrl(item.user.image) : null; // Lấy URI cho ảnh đại diện
+  const [likes, setLikes] = useState<Like[]>([]);
+
+  const userImageUri = item?.user?.image ? getSupabaseFileUrl(item.user.image) : null;
   const CreateAt = moment(item?.created_at).format('yyyy MMM D');
-  const liked = false;
-  const likes = [];
+
+  const liked = likes.some((like) => like.userId === currentUser?.id);
+
   const texttyles = {
     color: theme.colors.dark,
     fontSize: hp(1.75),
   };
+
   const tagsStyles = {
     div: texttyles,
     p: texttyles,
     ol: texttyles,
-    h1: {
-      color: theme.colors.dark,  // Đổi từ 'Colors' thành 'color'
-    },
-    h4: {
-      color: theme.colors.dark,  // Đổi từ 'Colors' thành 'color'
-    },
+    h1: { color: theme.colors.dark },
+    h4: { color: theme.colors.dark },
   };
-  //-------------------------Function------------------------------------------------------
-  const openPostDetails = () => {
 
-  }
+  //-------------------------Function------------------------------------------------------
+  useEffect(() => {
+    setLikes(item?.postLikes || []);
+  }, [item?.postLikes]);
+
+  const openPostDetails = () => {
+    if(!showMoreIcon) return null;
+    router.push({ pathname: 'postDetail', params: { postId: item?.id } });
+  };
+
+  // Function for like
+  const onLike = async () => {
+    if (liked) {
+      let updatedLikes = likes.filter(like => like.userId != currentUser?.id);
+      setLikes([...updatedLikes]);
+      let res = await removePostLike(item?.id, currentUser?.id);
+      console.log('removed like: ', res);
+      if (!res.success) {
+        Alert.alert('Post', 'Something went wrong');
+      }
+    } else {
+      const data: Like = {
+        userId: currentUser?.id,
+        postId: item?.id,
+      };
+
+      setLikes([...likes, data]);
+
+      const res: PostLikeResponse | null = await createPostLike(data);
+      console.log('add like: ', res);
+
+      if (!res?.success) {
+        Alert.alert('Post', 'Đã có lỗi xảy ra!');
+      }
+    }
+  };
+
+  // Function for share (đang bị looix)
+  const onShare = async () => {
+    let content = { message: stripHtmlTags(item?.body) };
+
+    if (item?.file) {
+      const fileUrl = getSupabaseFileUrl(item.file);  // Lấy URL từ Supabase
+      if (fileUrl) {  // Kiểm tra nếu fileUrl không phải là null
+        let url = await dowloadFile(fileUrl);
+        if (url) {  // Kiểm tra nếu url không phải là null
+          //content.url = url;  
+        }
+      }
+    }
+    Share.share(content);
+  };
+
+
   //-------------------------Main------------------------------------------------------
   return (
     <View style={[style.container, hasShadow && shadowStyles]}>
+      {/*name, icon, time, edit */}
       <View style={style.header}>
-        {/*avatar name time*/}
         <View style={style.userInfo}>
           <Avatar
             size={hp(4.5)}
-            uri={userImageUri}  // Đưa URI vào Avatar
+            uri={userImageUri}
             rounded={theme.radius.md}
           />
           <View style={{ gap: 2 }}>
@@ -65,97 +136,79 @@ const PostCard = ({
             <Text style={style.postTime}>{CreateAt}</Text>
           </View>
         </View>
-        {/*edit */}
-        <TouchableOpacity onPress={openPostDetails}>
-          <Icon name='dots-three-horizontal' size={hp(2)} color={theme.colors.text} />
-        </TouchableOpacity>
+        {
+          showMoreIcon && (
+            <TouchableOpacity onPress={openPostDetails}>
+              <Icon name='dots-three-horizontal' size={hp(2)} color={theme.colors.text} />
+            </TouchableOpacity>
+          )
+        }
       </View>
-      {/*post body */}
+
+        {/*body and media*/}
       <View style={style.content}>
         <View style={style.postBody}>
-          {
-            item?.body && (
-              <RenderHtml
-                contentWidth={wp(100)}
-                source={{ html: item?.body }}
-                tagsStyles={tagsStyles}
-              />
-            )
-          }
+          {item?.body && (
+            <RenderHtml
+              contentWidth={wp(100)}
+              source={{ html: item?.body }}
+              tagsStyles={tagsStyles}
+            />
+          )}
         </View>
-        {/*Post image */}
-        {
-          item?.file && item?.file?.includes('postImages') && (
-            <Image
-              source={{ uri: getSupabaseFileUrl(item?.file) || undefined }}
-              style={style.postMedia}
-              resizeMode='cover'  // Use 'resizeMode' instead of 'contentFix'
-            />
-          )
-        }
-        {/*Post video */}
-        {
-          item?.file && item?.file?.includes('postVideos') && (
-            <Video
-              style={[style.postMedia, { height: hp(30) }]}
-              source={{ uri: getSupabaseFileUrl(item?.file) || "" }}  
-              useNativeControls
-              resizeMode={ResizeMode.COVER}  
-              isLooping
-            />
-          )
-        }
+
+        {item?.file && item?.file.includes('postImages') && (
+          <Image
+            source={{ uri: getSupabaseFileUrl(item?.file) || undefined }}
+            style={style.postMedia}
+            resizeMode='cover'
+          />
+        )}
+
+        {item?.file && item?.file.includes('postVideos') && (
+          <Video
+            style={[style.postMedia, { height: hp(30) }]}
+            source={{ uri: getSupabaseFileUrl(item?.file) || "" }}
+            useNativeControls
+            resizeMode={ResizeMode.COVER}
+            isLooping
+          />
+        )}
       </View>
-      {/*Like, comment & share */}
+
+         {/*like, share and comment*/}
       <View style={style.footer}>
-        {/*Like */}
         <View style={style.footerButton}>
-          <TouchableOpacity>
+          <TouchableOpacity onPress={onLike}>
             <Icon
-              name='heart' 
-              size={28} 
-              color={liked? theme.colors.rose : theme.colors.textDark}
+              name='heart'
+              size={28}
+              color={liked ? theme.colors.rose : theme.colors.textDark}
             />
           </TouchableOpacity>
-          <Text>
-            {
-              likes?.length
-            }
-          </Text>
+          <Text>{likes?.length}</Text>
         </View>
-        {/*comment */}
+
         <View style={style.footerButton}>
-          <TouchableOpacity>
-            <Icon1
-              name='comment' size={25} color={ theme.colors.textDark}
-            />
+          <TouchableOpacity onPress={openPostDetails}>
+            <Icon1 name='comment' size={25} color={theme.colors.textDark} />
           </TouchableOpacity>
-          <Text>
-            {
-              0
-            }
-          </Text>
+          <Text>0</Text>
         </View>
-        {/*share */}
+
         <View style={style.footerButton}>
-          <TouchableOpacity>
-            <Icon2
-              name='share' size={25} color={ theme.colors.textDark}
-            />
+          <TouchableOpacity onPress={onShare}>
+            <Icon2 name='share' size={25} color={theme.colors.textDark} />
           </TouchableOpacity>
-          <Text>
-            {
-              0
-            }
-          </Text>
+          <Text>0</Text>
         </View>
       </View>
-      
     </View>
   );
 };
 
 export default PostCard;
+
 //-------------------------CSS------------------------------------------------------
 const style = StyleSheet.create({
   container: {
@@ -205,21 +258,12 @@ const style = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
   },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 18,
-  },
-  count: {
-    color: theme.colors.text,
-    fontSize: hp(1.8),
-  },
   postMedia: {
     height: hp(40),
     width: '100%',
     borderRadius: theme.radius.xl,
-    borderCurve: 'continuous'
-  }
+    borderCurve: 'continuous',
+  },
 });
 
 const shadowStyles = {

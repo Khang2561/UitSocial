@@ -12,7 +12,7 @@ interface PostErrorResponse {
 }
 
 type CreateOrUpdatePostResponse = PostSuccessResponse | PostErrorResponse;
-
+//----------------------------------tạo hoặc updâte post--------------------------------------------------------------- 
 export const createOrUpdatePost = async (post: any): Promise<CreateOrUpdatePostResponse> => {
     try {
         // upload image
@@ -50,6 +50,48 @@ export const createOrUpdatePost = async (post: any): Promise<CreateOrUpdatePostR
     }
 }
 
+//-------------------------------------------thêm like cho post---------------------------------------------------------------- 
+export const createPostLike = async (postLike: any): Promise<CreateOrUpdatePostResponse> => {
+    try {
+        const { data, error } = await supabase
+            .from('postLikes')
+            .insert(postLike)
+            .select()
+            .single();
+
+        if (error) {
+            console.log('createPostLike: ', error);
+            return { success: false, msg: 'Không thể createPostLike' };
+        }
+        return { success: true, data };
+    } catch (error) {
+        console.log('createPostLike: ', error);
+        return { success: false, msg: 'Không thể createPostLike' };
+    }
+};
+
+
+//---------------------------------------------xóa like post----------------------------------------------------------
+export const removePostLike = async (postId: string, userId: string): Promise<CreateOrUpdatePostResponse> => {
+    try {
+        const { error } = await supabase
+            .from('postLikes')
+            .delete()
+            .eq('userId', userId)
+            .eq('postId', postId);  // Chỉnh lại từ 'postOd' thành 'postId'
+
+        if (error) {
+            console.log('removePostLike: ', error);
+            return { success: false, msg: 'Không thể removePostLike' };
+        }
+        return { success: true, data: null };  // Trả về thành công
+    } catch (error) {
+        console.log('removePostLike: ', error);
+        return { success: false, msg: 'Không thể removePostLike' };
+    }
+};
+
+//----------------------------------------truy xuất post-------------------------------------------------------------------------  
 export const fetchPosts = async (limit = 10) => {
     try {
         const { data, error } = await supabase
@@ -60,7 +102,8 @@ export const fetchPosts = async (limit = 10) => {
                     id,
                     name,
                     image
-                )
+                ),
+                postLikes(*)
             `)  // Chú ý dấu ngoặc đơn và cách truy vấn các trường liên quan
             .order('created_at', { ascending: false })
             .limit(limit);
@@ -75,5 +118,52 @@ export const fetchPosts = async (limit = 10) => {
         return { success: false, msg: 'Không thể fetchPosts' };
     }
 };
+
+//---------------------------lấy thông tin chi tiết của bài post---------------------------------
+export const fetchPostDetails = async (postId:any) => {
+    try {
+        const { data, error } = await supabase
+            .from('posts')
+            .select(`
+                *,
+                user:users (
+                    id,
+                    name,
+                    image
+                ),
+                postLikes(*)
+            `)  // Chú ý dấu ngoặc đơn và cách truy vấn các trường liên quan
+            .eq('id',postId)
+            .single();
+
+        if (error) {
+            console.log('fetchPostDetail error: ', error);
+            return { success: false, msg: 'Không thể fetchPostDetail ' };
+        }
+        return { success: true, data };
+    } catch (error) {
+        console.log('fetchPostDetail : ', error);
+        return { success: false, msg: 'Không thể fetchPostDetail ' };
+    }
+};
+//-----------------------------hàm tạo comment-----------------------------------
+export const createComment = async (comment:any)=>{
+    try{
+        const {data,error} = await supabase
+        .from('comments')
+        .insert(comment)
+        .select()
+        .single();
+
+        if(error){
+            console.log('comment error: ',error);
+            return {success:false, msg:'could not create your comment'};
+        }
+        return {success:true, data:data};
+    }catch(error){
+        console.log('comment error: ',error);
+        return {success:false, msg:'could not create comment'};
+    }
+}
 
 

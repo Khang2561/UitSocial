@@ -14,9 +14,11 @@ const Layout = () => {
 };
 
 const MainLayout = () => {
+    //-------------------------CONST------------------------------------------------------
     const { setAuth, setUserData } = useAuth(); // Import useAuth
     const router = useRouter();
 
+    //-------------------------Function------------------------------------------------------
     const updateUserData = async (user:any,email:any) =>{
         let res = await getUserData(user?.id);
         if(res.success){
@@ -42,13 +44,23 @@ const MainLayout = () => {
         });
     },[]);
 
+    //-------------------------Main------------------------------------------------------
     return (
         <Stack
             screenOptions={{
                 headerShown: false,
             }}
-        />
+        >
+            <Stack.Screen
+                name="(main)/postDetail"
+                options={{
+                    presentation:'modal'
+                }}
+            />
+        </Stack>
     );
 };
 
 export default Layout;
+
+//-------------------------CSS------------------------------------------------------

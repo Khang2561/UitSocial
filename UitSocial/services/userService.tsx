@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 
+//---------------------------------------------------------------------------------------------------------------
 export const getUserData = async (userId: any) => {
     try {
         const { data, error } = await supabase
@@ -33,6 +34,7 @@ export const getUserData = async (userId: any) => {
     }
 };
 
+//------------------------------------------------------------------------------------------------------
 export const updateUser = async (userId: string, data:any) => {
     try {
         const { error } = await supabase

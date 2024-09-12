@@ -3,7 +3,8 @@ import {decode} from 'base64-arraybuffer'
 import * as FileSystem from 'expo-file-system'
 import {supabaseUrl} from '../constants/index'
 
-export const getUserImageSrc = (imagePath: string | null) => {
+//-------------------------------------------------------------------------------------------------------------------------
+export const getUserImageSrc = (imagePath: any | null) => {
     if (imagePath) {
         return getSupabaseFileUrl(imagePath);
     } else {
@@ -11,14 +12,15 @@ export const getUserImageSrc = (imagePath: string | null) => {
     }
 };
 
-export const getSupabaseFileUrl = (filePath: string | null) => {
+//-------------------------------------------------------------------------------------------------------------------------------
+export const getSupabaseFileUrl = (filePath: any | null) => {
     if (filePath) {
         return `${supabaseUrl}/storage/v1/object/public/uploads/${filePath}`;
     }
     return null;
 }
 
-// Function upload ảnh
+//-----------------------------------------Function upload ảnh----------------------------------------------------------------------
 export const uploadFile = async (folderName: string, fileUri: string, isImage = true) => {
     try {
         let fileName = getFilePath(folderName, isImage);
@@ -48,7 +50,23 @@ export const uploadFile = async (folderName: string, fileUri: string, isImage = 
     }
 };
 
-// Function lấy link của ảnh
+//------------------------------------Function lấy link của ảnh--------------------------------------------------------
 export const getFilePath = (folderName: string, isImage: boolean) => {
     return `/${folderName}/${(new Date()).getTime()}${isImage ? '.png' : '.mp4'}`; 
 };
+
+//Function dowload file 
+export const dowloadFile = async (url:string) =>{
+    try{
+        const {uri} = await FileSystem.downloadAsync(url,getLocalFilePath(url));
+        return uri;
+    }catch(error){
+        return null;
+    }
+};
+
+//---------------------------------------------------------------------
+export const getLocalFilePath = (filePath:string) =>{
+    let fileName = filePath.split('/').pop();
+    return '${FileSystem.documentDirectory}${fileName}';
+}

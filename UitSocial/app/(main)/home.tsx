@@ -8,7 +8,7 @@ import Icon from 'react-native-vector-icons/EvilIcons';
 import Icon1 from 'react-native-vector-icons/Feather';
 import { useRouter } from "expo-router";
 import Avatar from "@/components/Avatar";
-import { getSupabaseFileUrl } from '../../services/imageService';  
+import { getSupabaseFileUrl } from '../../services/imageService';
 import { fetchPosts } from "@/services/postService";
 import PostCard from '../../components/PostCard'
 import Loading from "@/components/Loading";
@@ -22,35 +22,38 @@ const Home = () => {
     const router = useRouter(); // router để chuyển trang 
     const uri = user?.image ? getSupabaseFileUrl(user.image) : null;// lấy link ảnh cho hình đại diện 
     const [posts, setPosts] = useState<any[]>([]); //hàm chứ post 
-    const handlePostEvent = async(payload:any)=>{
-        if(payload.event == 'INSERT && payload?.new?.id'){
-            let newPost ={...payload.new};
+    const [hasMore, setHasMore] = useState(true);
+    const handlePostEvent = async (payload: any) => {
+        if (payload.event == 'INSERT && payload?.new?.id') {
+            let newPost = { ...payload.new };
             let res = await getUserData(newPost.userId);
-            newPost.user=res.success?res.data:{};
-            setPosts(prevPosts=>[newPost,...prevPosts]);
+            newPost.user = res.success ? res.data : {};
+            setPosts(prevPosts => [newPost, ...prevPosts]);
         }
     }
     //-------------------------Function------------------------------------------------------
-    useEffect(()=>{
+    useEffect(() => {
         let postChannel = supabase
-        .channel('posts')
-        .on('postgres_changes',{event:'*',schema:'public',table:'post'},handlePostEvent)
-        .subscribe();
+            .channel('posts')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'post' }, handlePostEvent)
+            .subscribe();
 
-        getPosts();
+        //getPosts();
 
-        return () =>{
+        return () => {
             supabase.removeChannel(postChannel);
         }
-    },[])
+    }, [])
 
     //hàm lấy api của bài post 
     const getPosts = async () => {
-        limit = limit + 10;
+        if (!hasMore) return null;
+        limit = limit + 7;
         console.log('fetching post: ', limit);
-    
+
         let res = await fetchPosts(limit);  // Truyền giá trị limit vào hàm fetchPosts
         if (res.success && res.data) {
+            if (posts.length == res.data.length) setHasMore(false);
             setPosts(res.data);  // Chỉ gọi setPosts nếu res.data không phải là undefined
         } else {
             console.log('No posts found or fetch failed');
@@ -72,7 +75,7 @@ const Home = () => {
                         <Pressable onPress={() => router.push('/(main)/notifications')}>
                             <Icon name="heart" size={hp(3.8)} />
                         </Pressable>
-                        <Pressable onPress={()=> router.push('/(main)/newPost')}>
+                        <Pressable onPress={() => router.push('/(main)/newPost')}>
                             <Icon1 name="plus-square" size={hp(3.2)} />
                         </Pressable>
                         <Pressable onPress={() => router.push('/(main)/profile')}>
@@ -92,19 +95,33 @@ const Home = () => {
                     data={posts}
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.listStyle}
-                    keyExtractor={item=>item.id.toString()}
-                    renderItem={({item})=><PostCard
-                        item={item}
-                        currentUser={user}
-                        router={router}
-                    />}
-                    ListFooterComponent={(
-                        <View style={{marginVertical:posts.length==0?200:30}}>
-                            <Loading/>
+                    keyExtractor={item => item.id.toString()}
+                    renderItem={({ item }) => (
+                        <PostCard
+                            item={item}
+                            currentUser={user}
+                            router={router}
+                            hasShadow={true} // Pass hasShadow prop here
+                        />
+                    )}
+                    onEndReached={() => {
+                        getPosts(); // process when reaching the end to add more posts
+                    }}
+                    onEndReachedThreshold={0}
+                    ListFooterComponent={hasMore ? ( // loading icon
+                        <View style={{ marginVertical: posts.length === 0 ? 200 : 30 }}>
+                            <Loading />
+                        </View>
+                    ) : (
+                        <View style={{ marginVertical: 30 }}>
+                            <Text style={styles.noPosts}>
+                                No more posts
+                            </Text>
                         </View>
                     )}
                 />
-                 {/*********************show post*********************/}
+
+                {/*********************show post*********************/}
             </View>
         </ScreenWrapper>
     );
