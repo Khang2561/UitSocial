@@ -189,5 +189,22 @@ export const removeComment = async (commentId:any) => {
         return { success: false, msg: 'Không thể removeComment2' };
     }
 };
+//----------------------------------------remove post-------------------------------------------------------------------------
+export const removePost = async (postId:any) => {
+    try {
+        const { error } = await supabase
+            .from('posts')
+            .delete()
+            .eq('id', postId)
 
+        if (error) {
+            console.log('removePost: ', error);
+            return { success: false, msg: 'Không thể removePost1' };
+        }
+        return { success: true, data: {postId} };  // Trả về thành công
+    } catch (error) {
+        console.log('removePost: ', error);
+        return { success: false, msg: 'Không thể removePost2' };
+    }
+};
 

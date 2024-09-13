@@ -24,13 +24,25 @@ const Home = () => {
     const [posts, setPosts] = useState<any[]>([]); //hàm chứ post 
     const [hasMore, setHasMore] = useState(true);
     const handlePostEvent = async (payload: any) => {
-        if (payload.event == 'INSERT && payload?.new?.id') {
+        if (payload.event === 'INSERT' && payload?.new?.id) {
             let newPost = { ...payload.new };
             let res = await getUserData(newPost.userId);
+            newPost.postLikes = [];
+            newPost.comments = [{ count: 0 }];
             newPost.user = res.success ? res.data : {};
             setPosts(prevPosts => [newPost, ...prevPosts]);
         }
-    }
+    
+        if (payload.eventType === 'DELETE' && payload.old.id) {
+            setPosts(prevPosts => {
+                let updatedPosts = prevPosts.filter(post => post.id !== payload.old.id);
+                return updatedPosts;
+            });
+    
+            // Gọi lại hàm lấy dữ liệu sau khi xóa
+            getPosts(); 
+        }
+    };
     //-------------------------Function------------------------------------------------------
     useEffect(() => {
         let postChannel = supabase

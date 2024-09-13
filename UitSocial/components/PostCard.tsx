@@ -8,11 +8,11 @@ import moment from 'moment'
 import Icon from 'react-native-vector-icons/Entypo';
 import Icon1 from 'react-native-vector-icons/FontAwesome';
 import Icon2 from 'react-native-vector-icons/Feather';
+import Icon3 from 'react-native-vector-icons/AntDesign';
 import RenderHtml from 'react-native-render-html'
 import { Video, ResizeMode } from "expo-av";
 import { createPostLike, removePostLike } from "@/services/postService";
 import { stripHtmlTags } from '@/helpers/common'
-import Loading from "./Loading";
 
 LogBox.ignoreLogs(['Warning: TNodeChildrenRenderer', 'Warning: MemoizedTNodeRenderer', 'Warning: TRenderEngineProvider']);
 LogBox.ignoreLogs([
@@ -39,12 +39,18 @@ const PostCard = ({
   router,
   hasShadow = true,
   showMoreIcon = true,
+  showDelete = false,
+  onDelete=()=>{},
+  onEdit=()=>{},
 }: {
   item: any,
   currentUser: any,
   router: any,
   hasShadow: boolean,
   showMoreIcon: boolean
+  showDelete : boolean
+  onDelete: (onDeletePost:any) => void;
+  onEdit: (onEditPos:any) => void;
 }) => {
   //-------------------------CONST------------------------------------------------------
   const [likes, setLikes] = useState<Like[]>([]);
@@ -121,6 +127,21 @@ const PostCard = ({
     }
     Share.share(content);
   };
+  //function delete post 
+  const handlePostDelete = async () =>{
+    Alert.alert('Xác nhận','Bạn có chắc muốn xóa bài post này không',[
+      {
+        text:'Hủy',
+        onPress:()=>console.log('model cancel delete post'),
+        style:'cancel'
+      },
+      {
+        text:'Xóa',
+        onPress:()=>onDelete(item),
+        style:'destructive'
+      }
+    ])
+  }
 
 
   //-------------------------Main------------------------------------------------------
@@ -140,10 +161,23 @@ const PostCard = ({
           </View>
         </View>
         {
+          //edit post detail
           showMoreIcon && (
             <TouchableOpacity onPress={openPostDetails}>
               <Icon name='dots-three-horizontal' size={hp(2)} color={theme.colors.text} />
             </TouchableOpacity>
+          )
+        }
+        {
+          showDelete && currentUser.id == item?.userId && (
+            <View style={style.actions}>
+              <TouchableOpacity onPress={()=>onEdit(item)}>
+                <Icon3 name="edit" size={hp(2.5)} color={theme.colors.text}/>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handlePostDelete}>
+                <Icon3 name="delete" size={hp(2.5)} color={theme.colors.rose}/>
+              </TouchableOpacity>
+            </View>
           )
         }
       </View>
@@ -268,6 +302,11 @@ const style = StyleSheet.create({
     borderRadius: theme.radius.xl,
     borderCurve: 'continuous',
   },
+  actions:{
+    flexDirection:'row',
+    alignItems:'center',
+    gap:18,
+  }
 });
 
 const shadowStyles = {

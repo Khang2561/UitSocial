@@ -1,7 +1,7 @@
 import { ScrollView, StyleSheet, View, LogBox, TouchableOpacity, Alert, Text } from "react-native";
 import React, { useEffect, useState, useRef } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { createComment, fetchPostDetails, removeComment } from "@/services/postService";
+import { createComment, fetchPostDetails, removeComment, removePost } from "@/services/postService";
 import { hp, wp } from "@/helpers/common";
 import { theme } from "@/constants/theme";
 import { useAuth } from "@/contexts/AuthContext";
@@ -10,27 +10,10 @@ import Loading from "@/components/Loading";
 import Input from "@/components/Input";
 import Icon from 'react-native-vector-icons/Feather';
 import CommentItem from "@/components/CommentItem";
+import { supabase } from "@/lib/supabase";
+import { getUserData } from "@/services/userService";
 
 LogBox.ignoreAllLogs(true);
-
-// Định nghĩa kiểu props cho component PostCard
-type PostCardProps = {
-    item: any;
-    currentUser: any;
-    router: any;
-    hasShadow?: boolean;
-    showMoreIcon?: boolean;
-};
-
-// Định nghĩa kiểu props cho component Input
-type InputProps = {
-    style?: any;
-    inputRef?: React.RefObject<any>;
-    placeholder?: string;
-    onChangeText?: (value: string) => void;
-    placeholderTextColor?: string;
-    containerStyle?: any;
-};
 
 type Comment = {
     id: string;
@@ -43,6 +26,13 @@ type Comment = {
     created_at: string;
 };
 
+type Post = {
+    id: string;
+    userId: string;
+    comments: Comment[];
+    // Bạn có thể thêm các thuộc tính khác của Post nếu cần
+};
+
 const PostDetails = () => {
     //-------------------------CONST------------------------------------------------------
     const { postId } = useLocalSearchParams();
@@ -53,10 +43,44 @@ const PostDetails = () => {
     const inputRef = useRef<any>(null);
     const [loading, setLoading] = useState(false);
     const commentRef = useRef<string>('');
+    const handleNewComment = async (payload: any) => {
+        console.log('got new comment', payload.new);
+    
+        if (payload.new) {
+            let newComment = { ...payload.new };
+            let res = await getUserData(newComment.user.id);  // Sử dụng newComment.user.id
+            newComment.user = res.success ? res.data : {};
+    
+            setPost((prevPost: Post | null) => {
+                if (prevPost) {
+                    return {
+                        ...prevPost,
+                        comments: [newComment, ...prevPost.comments],
+                    };
+                }
+                return prevPost;
+            });
+        }
+    };
 
     //-------------------------Function------------------------------------------------------
     useEffect(() => {
+        
+        let commentChannel = supabase
+        .channel('comments')
+        .on('postgres_changes',{
+            event:'INSERT',
+            schema:'public',
+            table:'comments',
+            filter:'postId=eq.${postId}'
+        },handleNewComment)
+        .subscribe();
         getPostDetails();
+
+        return () =>{
+            supabase.removeChannel(commentChannel);
+        }
+
     }, []);
 
     const getPostDetails = async () => {
@@ -104,6 +128,22 @@ const PostDetails = () => {
         }
     };
 
+    const onDeletePost = async (item: any) => {
+        // Xóa bài post
+        let res = await removePost(post.id);
+        if (res.success) {
+            // Reload lại trang Home trước khi quay về
+            router.replace('/(main)/home');  // Thay vì router.back(), ta sử dụng router.replace
+        } else {
+            Alert.alert('Post', res.msg);
+        }
+    };
+    
+
+    const onEditPost = async (item:any)=>{
+        console.log('edit post: ',item);
+    }
+
     //-------------------------Main------------------------------------------------------
     if (startLoading) {
         return (
@@ -130,6 +170,9 @@ const PostDetails = () => {
                     router={router}
                     hasShadow={false}
                     showMoreIcon={false}
+                    showDelete={true}
+                    onDelete ={onDeletePost}
+                    onEdit={onEditPost}
                 />
 
                 {/* Comment input */}
