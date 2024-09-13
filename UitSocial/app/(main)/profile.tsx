@@ -6,7 +6,7 @@ import { useRouter } from 'expo-router';
 import Header from '@/components/Header';
 import { hp, wp } from '@/helpers/common';
 import Icon from 'react-native-vector-icons/AntDesign';
-import Icon1 from 'react-native-vector-icons/MaterialCommunityIcons';
+import Icon1 from 'react-native-vector-icons/AntDesign';
 import Icon2 from 'react-native-vector-icons/Feather';
 import { theme } from '@/constants/theme';
 import { supabase } from '@/lib/supabase';
@@ -66,7 +66,7 @@ const Profile = () => {
         {/*Header profile */}
         <Header title="Profile">
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-            <Icon1 name="logout" color={theme.colors.rose} size={24} />
+            <Icon1 name="logout" color={theme.colors.rose} size={20} />
           </TouchableOpacity>
         </Header>
         {/*main*/}

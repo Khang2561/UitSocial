@@ -103,8 +103,9 @@ export const fetchPosts = async (limit = 10) => {
                     name,
                     image
                 ),
-                postLikes(*)
-            `)  // Chú ý dấu ngoặc đơn và cách truy vấn các trường liên quan
+                postLikes(*),
+                comments(count)
+            `)  // Đảm bảo rằng bạn đang sử dụng count trong comments
             .order('created_at', { ascending: false })
             .limit(limit);
 
@@ -119,6 +120,8 @@ export const fetchPosts = async (limit = 10) => {
     }
 };
 
+
+
 //---------------------------lấy thông tin chi tiết của bài post---------------------------------
 export const fetchPostDetails = async (postId:any) => {
     try {
@@ -131,9 +134,11 @@ export const fetchPostDetails = async (postId:any) => {
                     name,
                     image
                 ),
-                postLikes(*)
-            `)  // Chú ý dấu ngoặc đơn và cách truy vấn các trường liên quan
+                postLikes(*),
+                comments (*,user : users(id,name,image))
+            `)  
             .eq('id',postId)
+            .order("created_at",{ascending:false, foreignTable:'comments'})
             .single();
 
         if (error) {
@@ -165,5 +170,24 @@ export const createComment = async (comment:any)=>{
         return {success:false, msg:'could not create comment'};
     }
 }
+
+//---------------------------------------------xóa comment của post----------------------------------------------------------
+export const removeComment = async (commentId:any) => {
+    try {
+        const { error } = await supabase
+            .from('comments')
+            .delete()
+            .eq('id', commentId)
+
+        if (error) {
+            console.log('removeComment: ', error);
+            return { success: false, msg: 'Không thể removeComment1' };
+        }
+        return { success: true, data: {commentId} };  // Trả về thành công
+    } catch (error) {
+        console.log('removeComment: ', error);
+        return { success: false, msg: 'Không thể removeComment2' };
+    }
+};
 
 

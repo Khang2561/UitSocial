@@ -12,6 +12,7 @@ import RenderHtml from 'react-native-render-html'
 import { Video, ResizeMode } from "expo-av";
 import { createPostLike, removePostLike } from "@/services/postService";
 import { stripHtmlTags } from '@/helpers/common'
+import Loading from "./Loading";
 
 LogBox.ignoreLogs(['Warning: TNodeChildrenRenderer', 'Warning: MemoizedTNodeRenderer', 'Warning: TRenderEngineProvider']);
 LogBox.ignoreLogs([
@@ -47,11 +48,13 @@ const PostCard = ({
 }) => {
   //-------------------------CONST------------------------------------------------------
   const [likes, setLikes] = useState<Like[]>([]);
-
   const userImageUri = item?.user?.image ? getSupabaseFileUrl(item.user.image) : null;
   const CreateAt = moment(item?.created_at).format('yyyy MMM D');
-
   const liked = likes.some((like) => like.userId === currentUser?.id);
+
+  console.log("-----------------------------------------------");
+  console.log("So like: ", likes?.length);
+  console.log("Comment: ", item?.comments);
 
   const texttyles = {
     color: theme.colors.dark,
@@ -72,7 +75,7 @@ const PostCard = ({
   }, [item?.postLikes]);
 
   const openPostDetails = () => {
-    if(!showMoreIcon) return null;
+    if (!showMoreIcon) return null;
     router.push({ pathname: 'postDetail', params: { postId: item?.id } });
   };
 
@@ -145,7 +148,7 @@ const PostCard = ({
         }
       </View>
 
-        {/*body and media*/}
+      {/*body and media*/}
       <View style={style.content}>
         <View style={style.postBody}>
           {item?.body && (
@@ -176,7 +179,7 @@ const PostCard = ({
         )}
       </View>
 
-         {/*like, share and comment*/}
+      {/*like, share and comment*/}
       <View style={style.footer}>
         <View style={style.footerButton}>
           <TouchableOpacity onPress={onLike}>
@@ -193,7 +196,8 @@ const PostCard = ({
           <TouchableOpacity onPress={openPostDetails}>
             <Icon1 name='comment' size={25} color={theme.colors.textDark} />
           </TouchableOpacity>
-          <Text>0</Text>
+          <Text>{item?.comments?.[0]?.count || 0}</Text>
+          {/*<Text>{item?.comments || 0}</Text>*/}
         </View>
 
         <View style={style.footerButton}>
