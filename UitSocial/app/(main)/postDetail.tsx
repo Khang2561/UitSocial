@@ -82,7 +82,7 @@ const PostDetails = () => {
         }
 
     }, []);
-
+    //show post details 
     const getPostDetails = async () => {
         let res = await fetchPostDetails(postId);
         if (res.success) {
@@ -90,7 +90,7 @@ const PostDetails = () => {
         }
         setStartLoading(false);
     };
-
+    //add new comment 
     const onNewComment = async () => {
         if (!commentRef.current) return null;
         let data = {
@@ -110,7 +110,7 @@ const PostDetails = () => {
             Alert.alert('Comment', res.msg);
         }
     };
-
+    //delete comment 
     const onDeleteComment = async (comment: Comment) => {
         console.log('deleting comment: ', comment);
         console.log('deleting comment id: ', comment.id);
@@ -127,7 +127,7 @@ const PostDetails = () => {
             Alert.alert('Comment : ', res.msg);
         }
     };
-
+    //delete post 
     const onDeletePost = async (item: any) => {
         // Xóa bài post
         let res = await removePost(post.id);
@@ -139,9 +139,10 @@ const PostDetails = () => {
         }
     };
     
-
+    //edit post 
     const onEditPost = async (item:any)=>{
-        console.log('edit post: ',item);
+        router.back();
+        router.push({pathname:'/(main)/newPost',params:{...item}})
     }
 
     //-------------------------Main------------------------------------------------------

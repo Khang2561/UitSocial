@@ -1,26 +1,36 @@
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Image, Pressable, Alert, LogBox } from 'react-native'
-import React, { useRef, useState } from 'react'
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Image, Pressable, Alert, LogBox } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
 import ScreenWrapper from '../../components/ScreenWrapprer';
 import Header from '@/components/Header';
-import { hp, wp } from '../../helpers/common'
-import { theme } from '../../constants/theme'
+import { hp, wp } from '../../helpers/common';
+import { theme } from '../../constants/theme';
 import Avatar from '@/components/Avatar';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSupabaseFileUrl } from '../../services/imageService';
 import RichTextEditor from '@/components/RichTextEditor';
-import { useRouter } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import Icon1 from 'react-native-vector-icons/Feather';
-import Button from '@/components/Button'
+import Button from '@/components/Button';
 import * as ImagePicker from 'expo-image-picker';
-import { Video, ResizeMode } from 'expo-av'
+import { Video, ResizeMode } from 'expo-av';
 import { createOrUpdatePost } from '@/services/postService';
 import { RichEditor } from 'react-native-pell-rich-editor';
 
-LogBox.ignoreLogs(['Toolbar has no editor'])
+// Ignore specific warnings
+LogBox.ignoreLogs(['Toolbar has no editor']);
+
+// Define the Post type
+interface Post {
+  id?: string;
+  body?: string | string[];
+  file?: string;
+}
+
 const NewPost = () => {
   //-------------------------CONST------------------------------------------------------
+  const post = useLocalSearchParams<any>();
   const { user } = useAuth();
-  const bodyRef = useRef("");
+  const bodyRef = useRef<string>("");
   const editorRef = useRef<RichEditor | null>(null);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -28,6 +38,37 @@ const NewPost = () => {
   const uri = user?.image ? getSupabaseFileUrl(user.image) : null;
 
   //-------------------------Function------------------------------------------------------
+  const [isPostUpdated, setIsPostUpdated] = useState(false);
+
+  useEffect(() => {
+    if (post && post.id && !isPostUpdated) {
+      const bodyContent = typeof post.body === 'string' ? post.body : (Array.isArray(post.body) ? post.body.join('') : '');
+      bodyRef.current = bodyContent;
+
+      if (typeof post.file === 'string') {
+        setFile({
+          uri: getFileUri(post.file) || '',
+          type: 'image', // or 'video' depending on your logic
+          width: 0,
+          height: 0,
+          fileSize: 0,
+          fileName: '',
+          duration: 0,
+          assetId: '',
+        });
+      } else {
+        setFile(null);
+      }
+
+      // Set content for RichTextEditor
+      setTimeout(() => {
+        editorRef.current?.setContentHTML(bodyContent);
+      }, 3);
+
+      setIsPostUpdated(true);
+    }
+  }, [post, isPostUpdated]);
+
   const onPick = async (isImage: boolean) => {
     let mediaConfig: ImagePicker.ImagePickerOptions = {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -49,7 +90,7 @@ const NewPost = () => {
     }
   };
 
-  const isLocalFile = (file: any) => {
+  const isLocalFile = (file: any): file is ImagePicker.ImagePickerAsset => {
     return typeof file === 'object';
   };
 
@@ -79,12 +120,22 @@ const NewPost = () => {
       return;
     }
   
-    let data = {
+    let data: {
+      file: ImagePicker.ImagePickerAsset | null;
+      body: string;
+      userId: any;
+      id?: string;
+    } = {
       file,
       body: bodyRef.current,
       userId: user?.id,
     };
   
+    if (post.id) {
+      data.id = post.id; // TypeScript biết thuộc tính id là hợp lệ
+    }
+  
+    //create or update post
     setLoading(true);
     const res = await createOrUpdatePost(data);
     setLoading(false);
@@ -94,11 +145,14 @@ const NewPost = () => {
       if (editorRef.current) {
         editorRef.current.setContentHTML('');
       }
-      router.back();
+  
+      // Điều hướng về trang Home và tải lại trang Home để cập nhật danh sách bài viết
+      router.replace('/home'); // Thay thế trang Home để đảm bảo nó được tải lại
     } else {
       Alert.alert('Post', res.msg);
     }
   };
+  
 
   //-------------------------Main------------------------------------------------------
   return (
@@ -127,40 +181,32 @@ const NewPost = () => {
             />
           </View>
 
-          {
-            file && (
-              <View style={styles.file}>
-                {
-                  getFileType(file) === 'video' ? (
-                    <Video
-                      style={{ flex: 1 }}
-                      source={{
-                        uri: getFileUri(file) || '',
-                      }}
-                      useNativeControls
-                      resizeMode={ResizeMode.COVER}
-                      isLooping
-                    />
-                  ) : (
-                    <Image
-                      source={{ uri: getFileUri(file) || undefined }}
-                      resizeMode="cover"
-                      style={{ flex: 1 }}
-                    />
-                  )
-                }
+          {file && (
+            <View style={styles.file}>
+              {getFileType(file) === 'video' ? (
+                <Video
+                  style={{ flex: 1 }}
+                  source={{ uri: getFileUri(file) || '' }}
+                  useNativeControls
+                  resizeMode={ResizeMode.COVER}
+                  isLooping
+                />
+              ) : (
+                <Image
+                  source={{ uri: getFileUri(file) || undefined }}
+                  resizeMode="cover"
+                  style={{ flex: 1 }}
+                />
+              )}
 
-                <Pressable style={styles.closeIcon} onPress={() => setFile(null)}>
-                  <Icon1 name="delete" size={20} color="white" />
-                </Pressable>
-              </View>
-            )
-          }
+              <Pressable style={styles.closeIcon} onPress={() => setFile(null)}>
+                <Icon1 name="delete" size={20} color="white" />
+              </Pressable>
+            </View>
+          )}
 
           <View style={styles.media}>
-            <Text style={styles.addImageText}>
-              Thêm bài viết
-            </Text>
+            <Text style={styles.addImageText}>Thêm bài viết</Text>
             <View style={styles.mediaIcons}>
               <TouchableOpacity onPress={() => onPick(true)}>
                 <Icon1 name="image" size={25} color={theme.colors.dark} />
@@ -174,7 +220,7 @@ const NewPost = () => {
 
         <Button
           buttonStyle={{ height: hp(6.2) }}
-          title="Post"
+          title={post && post.id ? "Cập nhật" : "Post"}
           loading={loading}
           hasShadow={false}
           onPress={onSubmit}
@@ -182,7 +228,8 @@ const NewPost = () => {
       </View>
     </ScreenWrapper>
   );
-}
+};
+
 //-------------------------CSS------------------------------------------------------
 const styles = StyleSheet.create({
   container: {
@@ -261,7 +308,7 @@ const styles = StyleSheet.create({
     right: 10,
     padding: 7,
     borderRadius: 50,
-    backgroundColor: 'rgba(255,0,0,0.6)'
+    backgroundColor: 'rgba(255,0,0,0.6)',
   }
 });
 
