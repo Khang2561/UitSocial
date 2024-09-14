@@ -12,6 +12,7 @@ import Icon from 'react-native-vector-icons/Feather';
 import CommentItem from "@/components/CommentItem";
 import { supabase } from "@/lib/supabase";
 import { getUserData } from "@/services/userService";
+import { createNotification } from "@/services/notificationService";
 
 LogBox.ignoreAllLogs(true);
 
@@ -35,7 +36,7 @@ type Post = {
 
 const PostDetails = () => {
     //-------------------------CONST------------------------------------------------------
-    const { postId } = useLocalSearchParams();
+    const { postId,commentId } = useLocalSearchParams();
     const [post, setPost] = useState<any>(null);
     const { user } = useAuth();
     const router = useRouter();
@@ -43,14 +44,30 @@ const PostDetails = () => {
     const inputRef = useRef<any>(null);
     const [loading, setLoading] = useState(false);
     const commentRef = useRef<string>('');
+    
+
+    //-------------------------Function------------------------------------------------------
+    useEffect(() => {
+        let commentChannel = supabase
+        .channel('comments')
+        .on('postgres_changes',{
+            event:'INSERT',
+            schema:'public',
+            table:'comments',
+            filter:'postId=eq.${postId}'
+        },handleNewComment)
+        .subscribe();
+        getPostDetails();
+        return () =>{
+            supabase.removeChannel(commentChannel);
+        }
+    }, []);
+    //reload lại sau khi add comment 
     const handleNewComment = async (payload: any) => {
-        console.log('got new comment', payload.new);
-    
         if (payload.new) {
-            let newComment = { ...payload.new };
-            let res = await getUserData(newComment.user.id);  // Sử dụng newComment.user.id
+            let newComment = { ...payload.new };//thêm comment mới vào array 
+            let res = await getUserData(newComment.user.id);  // add lên database 
             newComment.user = res.success ? res.data : {};
-    
             setPost((prevPost: Post | null) => {
                 if (prevPost) {
                     return {
@@ -62,26 +79,6 @@ const PostDetails = () => {
             });
         }
     };
-
-    //-------------------------Function------------------------------------------------------
-    useEffect(() => {
-        
-        let commentChannel = supabase
-        .channel('comments')
-        .on('postgres_changes',{
-            event:'INSERT',
-            schema:'public',
-            table:'comments',
-            filter:'postId=eq.${postId}'
-        },handleNewComment)
-        .subscribe();
-        getPostDetails();
-
-        return () =>{
-            supabase.removeChannel(commentChannel);
-        }
-
-    }, []);
     //show post details 
     const getPostDetails = async () => {
         let res = await fetchPostDetails(postId);
@@ -92,16 +89,34 @@ const PostDetails = () => {
     };
     //add new comment 
     const onNewComment = async () => {
-        if (!commentRef.current) return null;
+        if (!commentRef.current) return null;//nếu chưa nhập vào công ty nào thì trả về null 
         let data = {
             userId: user?.id,
             postId: post?.id,
             text: commentRef.current
         };
         setLoading(true);
-        let res = await createComment(data);
+        let res = await createComment(data);//upload lên database 
+        console.log('da up comment thanh cong ');
         setLoading(false);
         if (res.success) {
+            //gửi thông báo tới chủ post 
+            console.log('da up comment thanh cong1 ');
+            if(user.id!=post.userId){
+                //send notification 
+                console.log('da up comment thanh cong 2');
+                let notify = {
+                    senderId: user.id,
+                    receiverId:post.userId,
+                    title:'commented on your post',
+                    data: JSON.stringify({
+                        postId: post.id,
+                        commentId:res?.data?.id
+                    })
+                }
+                console.log('thong bao : ',notify);
+                createNotification(notify);//truyền lên data
+            }
             inputRef?.current?.clear();
             commentRef.current = "";
             // Cập nhật lại bài post với comment mới
@@ -212,6 +227,7 @@ const PostDetails = () => {
                                     name: comment.user?.name,
                                     image: comment.user?.image,
                                 },
+                                highlight :comment.id === commentId,
                                 created_at: comment.created_at,
                                 canDelete: user.id === comment.user.id || user.id === post?.userId,
                             }}

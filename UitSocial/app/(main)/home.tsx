@@ -14,6 +14,7 @@ import PostCard from '../../components/PostCard'
 import Loading from "@/components/Loading";
 import { supabase } from "@/lib/supabase";
 import { getUserData } from "@/services/userService";
+import axios from 'axios';
 var limit = 0;
 
 const Home = () => {
@@ -23,6 +24,22 @@ const Home = () => {
     const uri = user?.image ? getSupabaseFileUrl(user.image) : null;// lấy link ảnh cho hình đại diện 
     const [posts, setPosts] = useState<any[]>([]); //hàm chứ post 
     const [hasMore, setHasMore] = useState(true);
+    const [weatherIcon, setWeatherIcon] = useState<string>(''); // Trạng thái lưu trữ biểu tượng thời tiết
+
+    //-------------------------Function------------------------------------------------------
+    useEffect(() => {
+        let postChannel = supabase
+            .channel('posts')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'post' }, handlePostEvent)
+            .subscribe();
+
+        fetchWeather();//hàm lấy thồi tiết 
+        //getPosts();
+        return () => {
+            supabase.removeChannel(postChannel);
+        }
+    }, [])
+
     const handlePostEvent = async (payload: any) => {
         if (payload.event === 'INSERT' && payload?.new?.id) {
             let newPost = { ...payload.new };
@@ -32,30 +49,15 @@ const Home = () => {
             newPost.user = res.success ? res.data : {};
             setPosts(prevPosts => [newPost, ...prevPosts]);
         }
-    
         if (payload.eventType === 'DELETE' && payload.old.id) {
             setPosts(prevPosts => {
                 let updatedPosts = prevPosts.filter(post => post.id !== payload.old.id);
                 return updatedPosts;
             });
-    
             // Gọi lại hàm lấy dữ liệu sau khi xóa
             getPosts(); 
         }
     };
-    //-------------------------Function------------------------------------------------------
-    useEffect(() => {
-        let postChannel = supabase
-            .channel('posts')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'post' }, handlePostEvent)
-            .subscribe();
-
-        //getPosts();
-
-        return () => {
-            supabase.removeChannel(postChannel);
-        }
-    }, [])
 
     //hàm lấy api của bài post 
     const getPosts = async () => {
@@ -63,13 +65,33 @@ const Home = () => {
         limit = limit + 7;
         console.log('fetching post: ', limit);
 
-        let res = await fetchPosts(limit);  // Truyền giá trị limit vào hàm fetchPosts
+        let res = await fetchPosts(limit,null);  // Truyền giá trị limit vào hàm fetchPosts
         if (res.success && res.data) {
             if (posts.length == res.data.length) setHasMore(false);
             setPosts(res.data);  // Chỉ gọi setPosts nếu res.data không phải là undefined
         } else {
             console.log('No posts found or fetch failed');
             setPosts([]);  // Đặt giá trị mặc định là mảng rỗng nếu không có dữ liệu
+        }
+    };
+
+    // Lấy dữ liệu thời tiết
+    const fetchWeather = async () => {
+        try {
+            const response = await axios.get(
+                'https://api.weatherapi.com/v1/current.json',
+                {
+                    params: {
+                        key: '552ef1c6639b4b449eb70535241409',
+                        q: 'Thu Duc',
+                        aqi: 'no',
+                    },
+                }
+            );
+            const weatherData = response.data;
+            setWeatherIcon(weatherData.current.condition.icon); // Biểu tượng thời tiết
+        } catch (error) {
+            console.error('Error fetching weather data:', error);
         }
     };
     //-------------------------Main------------------------------------------------------
@@ -83,6 +105,15 @@ const Home = () => {
                         style={styles.logo}
                     />
                     <Text style={styles.title}>UitSocial</Text>
+                    {/* Thêm biểu tượng thời tiết */}
+                    <View style={styles.weatherContainer}>
+                            <Pressable onPress={() => router.push('/weatherUit')}>
+                            <Image 
+                                source={{ uri: `https:${weatherIcon}` }} 
+                                style={styles.weatherIcon} 
+                            />
+                            </Pressable>
+                        </View>
                     <View style={styles.icons}>
                         <Pressable onPress={() => router.push('/(main)/notifications')}>
                             <Icon name="heart" size={hp(3.8)} />
@@ -105,7 +136,7 @@ const Home = () => {
                 {/*********************show post*********************/}
                 <FlatList
                     data={posts}
-                    showsVerticalScrollIndicator={false}
+                    showsVerticalScrollIndicator={false}//ẩn thanh scroll
                     contentContainerStyle={styles.listStyle}
                     keyExtractor={item => item.id.toString()}
                     renderItem={({ item }) => (
@@ -199,5 +230,18 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: hp(1.2),
         fontWeight: '600',
+    },
+    weatherContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    weatherIcon: {
+        width: 30,
+        height: 30,
+        marginRight: 5,
+    },
+    weatherCondition: {
+        fontSize: hp(2),
+        color: theme.colors.text,
     },
 });

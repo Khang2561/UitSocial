@@ -27,11 +27,11 @@ type Like = {
 type PostLikeResponse = {
   success: boolean;
 };
-
+/*
 type ShareContent = {
   message: string;
   url?: string; // Make url optional
-};
+};*/
 
 const PostCard = ({
   item,
@@ -53,10 +53,14 @@ const PostCard = ({
   onEdit: (onEditPos:any) => void;
 }) => {
   //-------------------------CONST------------------------------------------------------
-  const [likes, setLikes] = useState<Like[]>([]);
-  const userImageUri = item?.user?.image ? getSupabaseFileUrl(item.user.image) : null;
-  const CreateAt = moment(item?.created_at).format('yyyy MMM D');
-  const liked = likes.some((like) => like.userId === currentUser?.id);
+  const [likes, setLikes] = useState<Like[]>([]);//lấy danh sách like 
+  const userImageUri = item?.user?.image ? getSupabaseFileUrl(item.user.image) : null;// lấy đường link chính thức từ supabase 
+  const CreateAt = moment(item?.created_at).format('yyyy MMM D');// chỉnh ngày tháng 
+  const liked = likes.some((like) => like.userId === currentUser?.id);//kiểm tra người dùng đó đã like bài post chưa 
+  const data: Like = {
+    userId: currentUser?.id,
+    postId: item?.id,
+  };
 
   console.log("-----------------------------------------------");
   console.log("So like: ", likes?.length);
@@ -80,32 +84,31 @@ const PostCard = ({
     setLikes(item?.postLikes || []);
   }, [item?.postLikes]);
 
+  //function open post detail
   const openPostDetails = () => {
     if (!showMoreIcon) return null;
-    router.push({ pathname: 'postDetail', params: { postId: item?.id } });
+    router.push({ pathname: 'postDetail', params: { postId: item?.id } });//truyền vào tham số post id cho create post  
   };
 
   // Function for like
   const onLike = async () => {
+    //Kiểm tra người dùng đã like bài post này chưa
     if (liked) {
-      let updatedLikes = likes.filter(like => like.userId != currentUser?.id);
-      setLikes([...updatedLikes]);
-      let res = await removePostLike(item?.id, currentUser?.id);
+      //xử lý trạng thái unlike 
+      let updatedLikes = likes.filter(like => like.userId != currentUser?.id);//tách like của người dùng 
+      setLikes([...updatedLikes]);//cập nhập lại danh sách bài post 
+      let res = await removePostLike(item?.id, currentUser?.id);//gọi api cập nhập lên supubase 
+      //kiểm tra trạng thái xem đã thành công hay chưa 
       console.log('removed like: ', res);
       if (!res.success) {
         Alert.alert('Post', 'Something went wrong');
       }
     } else {
-      const data: Like = {
-        userId: currentUser?.id,
-        postId: item?.id,
-      };
-
-      setLikes([...likes, data]);
-
-      const res: PostLikeResponse | null = await createPostLike(data);
+      //Thêm like của người dùng vào 
+      setLikes([...likes, data]);//cập nhập like mới của người dùng vào array 
+      const res: PostLikeResponse | null = await createPostLike(data);//đưa lên supubase 
+      //kiểm tra lỗi (nếu có)
       console.log('add like: ', res);
-
       if (!res?.success) {
         Alert.alert('Post', 'Đã có lỗi xảy ra!');
       }
@@ -127,6 +130,7 @@ const PostCard = ({
     }
     Share.share(content);
   };
+
   //function delete post 
   const handlePostDelete = async () =>{
     Alert.alert('Xác nhận','Bạn có chắc muốn xóa bài post này không',[
@@ -137,7 +141,7 @@ const PostCard = ({
       },
       {
         text:'Xóa',
-        onPress:()=>onDelete(item),
+        onPress:()=>onDelete(item),//link với post detail 
         style:'destructive'
       }
     ])
@@ -150,18 +154,21 @@ const PostCard = ({
       {/*name, icon, time, edit */}
       <View style={style.header}>
         <View style={style.userInfo}>
+          {/*avatar */}
           <Avatar
             size={hp(4.5)}
             uri={userImageUri}
             rounded={theme.radius.md}
           />
           <View style={{ gap: 2 }}>
+            {/*name*/}
             <Text style={style.username}>{item?.user?.name}</Text>
+            {/*time post*/}
             <Text style={style.postTime}>{CreateAt}</Text>
           </View>
         </View>
         {
-          //edit post detail
+          // icon to open edit post detail 
           showMoreIcon && (
             <TouchableOpacity onPress={openPostDetails}>
               <Icon name='dots-three-horizontal' size={hp(2)} color={theme.colors.text} />
@@ -169,11 +176,14 @@ const PostCard = ({
           )
         }
         {
+          // only show when your post
           showDelete && currentUser.id == item?.userId && (
             <View style={style.actions}>
+              {/*edit post when touch will back create post*/}
               <TouchableOpacity onPress={()=>onEdit(item)}>
                 <Icon3 name="edit" size={hp(2.5)} color={theme.colors.text}/>
               </TouchableOpacity>
+              {/*delete post */}
               <TouchableOpacity onPress={handlePostDelete}>
                 <Icon3 name="delete" size={hp(2.5)} color={theme.colors.rose}/>
               </TouchableOpacity>
@@ -184,6 +194,7 @@ const PostCard = ({
 
       {/*body and media*/}
       <View style={style.content}>
+        {/*show text post*/}
         <View style={style.postBody}>
           {item?.body && (
             <RenderHtml
@@ -193,7 +204,7 @@ const PostCard = ({
             />
           )}
         </View>
-
+        {/*show images post*/}
         {item?.file && item?.file.includes('postImages') && (
           <Image
             source={{ uri: getSupabaseFileUrl(item?.file) || undefined }}
@@ -201,7 +212,7 @@ const PostCard = ({
             resizeMode='cover'
           />
         )}
-
+        {/*show video post*/}
         {item?.file && item?.file.includes('postVideos') && (
           <Video
             style={[style.postMedia, { height: hp(30) }]}
@@ -215,6 +226,7 @@ const PostCard = ({
 
       {/*like, share and comment*/}
       <View style={style.footer}>
+        {/*like*/}
         <View style={style.footerButton}>
           <TouchableOpacity onPress={onLike}>
             <Icon
@@ -225,7 +237,7 @@ const PostCard = ({
           </TouchableOpacity>
           <Text>{likes?.length}</Text>
         </View>
-
+        {/*comment*/}
         <View style={style.footerButton}>
           <TouchableOpacity onPress={openPostDetails}>
             <Icon1 name='comment' size={25} color={theme.colors.textDark} />
@@ -233,7 +245,7 @@ const PostCard = ({
           <Text>{item?.comments?.[0]?.count || 0}</Text>
           {/*<Text>{item?.comments || 0}</Text>*/}
         </View>
-
+        {/*share*/}
         <View style={style.footerButton}>
           <TouchableOpacity onPress={onShare}>
             <Icon2 name='share' size={25} color={theme.colors.textDark} />

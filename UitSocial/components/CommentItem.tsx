@@ -20,8 +20,10 @@ type CommentItemProps = {
         };
         created_at: string;
         canDelete: boolean;
+        highlight? :boolean;
     };
     onDelete: (comment: any) => void;
+  
 };
 
 
@@ -29,7 +31,7 @@ const CommentItem = ({ item, onDelete }: CommentItemProps) => {
     //-------------------------CONST------------------------------------------------------
     const uri = item?.user?.image ? getSupabaseFileUrl(item.user.image) : null;
     const createdAt = moment(item.created_at).format('YYYY MMM D'); // Format the date
-    
+    const highlight = false;
     //-------------------------FUNCTION------------------------------------------------------
     const handleDelete = () =>{
         Alert.alert('Xác nhận','Bạn có chắc muốn xóa comment không ?',[
@@ -47,7 +49,7 @@ const CommentItem = ({ item, onDelete }: CommentItemProps) => {
     }
     //-------------------------Main------------------------------------------------------
     return (
-        <View style={styles.container}>
+        <View style={[styles.container,highlight && styles.highlight]}>
             {/* Image */}
             <Avatar uri={uri} />
             <View style={styles.content}>
@@ -115,4 +117,14 @@ const styles = StyleSheet.create({
         marginTop: 5,  // Adds space between the user info and comment text
         fontWeight: 'normal',
     },
+    highlight:{
+        borderWidth:0.2,
+        backgroundColor:'white',
+        borderColor:theme.colors.dark,
+        shadowColor:theme.colors.dark,
+        shadowOffset:{width:0,height:0},
+        shadowOpacity: 0.3,
+        shadowRadius:8,
+        elevation:5
+    }
 });
