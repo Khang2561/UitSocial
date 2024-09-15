@@ -25,6 +25,7 @@ const Home = () => {
     const [posts, setPosts] = useState<any[]>([]); //hàm chứ post 
     const [hasMore, setHasMore] = useState(true);
     const [weatherIcon, setWeatherIcon] = useState<string>(''); // Trạng thái lưu trữ biểu tượng thời tiết
+    const [notificationCount, setNotificationCount] = useState(0);
 
     //-------------------------Function------------------------------------------------------
     useEffect(() => {
@@ -34,11 +35,25 @@ const Home = () => {
             .subscribe();
 
         fetchWeather();//hàm lấy thồi tiết 
-        //getPosts();
+        
+        let notificationChannel = supabase
+        .channel('notifications')
+        //.on('postgres_changes',{event:'INSERT',schema:'public', table:'notifications',filter:'receiverId=eq.${user.id}'},handleNewNotifications)
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `receiverId=eq.${user.id}` }, handleNewNotifications)
+        .subscribe();
+
         return () => {
             supabase.removeChannel(postChannel);
+            supabase.removeChannel(notificationChannel);
         }
     }, [])
+
+    const handleNewNotifications = async (payload:any)=>{
+        console.log('got new notifications: ',payload);
+        if(payload.eventType=='INSERT' && payload.new.id){
+            setNotificationCount(prev => prev +1);
+        }
+    }
 
     const handlePostEvent = async (payload: any) => {
         if (payload.event === 'INSERT' && payload?.new?.id) {
@@ -63,14 +78,11 @@ const Home = () => {
     const getPosts = async () => {
         if (!hasMore) return null;
         limit = limit + 7;
-        console.log('fetching post: ', limit);
-
         let res = await fetchPosts(limit,null);  // Truyền giá trị limit vào hàm fetchPosts
         if (res.success && res.data) {
             if (posts.length == res.data.length) setHasMore(false);
             setPosts(res.data);  // Chỉ gọi setPosts nếu res.data không phải là undefined
         } else {
-            console.log('No posts found or fetch failed');
             setPosts([]);  // Đặt giá trị mặc định là mảng rỗng nếu không có dữ liệu
         }
     };
@@ -117,6 +129,13 @@ const Home = () => {
                     <View style={styles.icons}>
                         <Pressable onPress={() => router.push('/(main)/notifications')}>
                             <Icon name="heart" size={hp(3.8)} />
+                            {
+                                notificationCount>0 && (
+                                    <View style={styles.pill}>
+                                        <Text style={styles.pillText}>{notificationCount}</Text>
+                                    </View>
+                                )
+                            }
                         </Pressable>
                         <Pressable onPress={() => router.push('/(main)/newPost')}>
                             <Icon1 name="plus-square" size={hp(3.2)} />
@@ -217,19 +236,20 @@ const styles = StyleSheet.create({
     },
     pill: {
         position: 'absolute',
-        right: -10,
-        top: -4,
-        height: hp(2.2),
-        width: hp(2.2),
+        right: -6, // Điều chỉnh vị trí từ bên phải
+        top: -6,   // Điều chỉnh vị trí từ phía trên
+        height: hp(2.5), // Tăng kích thước để số không bị chèn ép
+        width: hp(2.5),  // Tăng kích thước để số không bị chèn ép
         justifyContent: 'center',
-        alignContent: 'center',
-        borderRadius: 20,
+        alignItems: 'center', // Căn giữa số bên trong
+        borderRadius: hp(2.5) / 2, // Bo tròn viên thuốc
         backgroundColor: theme.colors.roseLight,
     },
     pillText: {
         color: 'white',
-        fontSize: hp(1.2),
+        fontSize: hp(1.4), // Tăng kích thước chữ
         fontWeight: '600',
+        textAlign: 'center', // Đảm bảo số được căn giữa
     },
     weatherContainer: {
         flexDirection: 'row',

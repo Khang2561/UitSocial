@@ -13,6 +13,7 @@ import CommentItem from "@/components/CommentItem";
 import { supabase } from "@/lib/supabase";
 import { getUserData } from "@/services/userService";
 import { createNotification } from "@/services/notificationService";
+import Header from "@/components/Header";
 
 LogBox.ignoreAllLogs(true);
 
@@ -44,6 +45,9 @@ const PostDetails = () => {
     const inputRef = useRef<any>(null);
     const [loading, setLoading] = useState(false);
     const commentRef = useRef<string>('');
+
+    console.log('post detail post id: ',postId)
+    console.log('post detail comment id: ',commentId)
     
 
     //-------------------------Function------------------------------------------------------
@@ -97,14 +101,11 @@ const PostDetails = () => {
         };
         setLoading(true);
         let res = await createComment(data);//upload lên database 
-        console.log('da up comment thanh cong ');
         setLoading(false);
         if (res.success) {
             //gửi thông báo tới chủ post 
-            console.log('da up comment thanh cong1 ');
             if(user.id!=post.userId){
                 //send notification 
-                console.log('da up comment thanh cong 2');
                 let notify = {
                     senderId: user.id,
                     receiverId:post.userId,
@@ -114,7 +115,6 @@ const PostDetails = () => {
                         commentId:res?.data?.id
                     })
                 }
-                console.log('thong bao : ',notify);
                 createNotification(notify);//truyền lên data
             }
             inputRef?.current?.clear();
@@ -127,8 +127,6 @@ const PostDetails = () => {
     };
     //delete comment 
     const onDeleteComment = async (comment: Comment) => {
-        console.log('deleting comment: ', comment);
-        console.log('deleting comment id: ', comment.id);
         let res = await removeComment(comment.id);
         if (res.success) {
             setPost((prevPost: any) => {
@@ -179,6 +177,8 @@ const PostDetails = () => {
 
     return (
         <View style={styles.container}>
+            <Header title="Profile">
+        </Header>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
                 <PostCard
                     item={{ ...post, commentsCount: post?.comments?.length }}
@@ -187,11 +187,10 @@ const PostDetails = () => {
                     hasShadow={false}
                     showMoreIcon={false}
                     showDelete={true}
-                    onDelete ={onDeletePost}
+                    onDelete={onDeletePost}
                     onEdit={onEditPost}
                 />
 
-                {/* Comment input */}
                 <View style={{ flexDirection: 'row' }}>
                     <Input
                         style={styles.inputContainer}
@@ -214,20 +213,19 @@ const PostDetails = () => {
                     }
                 </View>
 
-                {/* Comment list */}
                 {
                     post?.comments?.map((comment: Comment) => (
                         <CommentItem
                             key={comment.id?.toString()}
                             item={{
-                                id: comment.id,  // Truyền id của comment vào đây
+                                id: comment.id,
                                 text: comment.text,
                                 user: {
                                     id: comment.user?.id,
                                     name: comment.user?.name,
                                     image: comment.user?.image,
                                 },
-                                highlight :comment.id === commentId,
+                                highlight: comment.id.toString() === commentId?.toString(),
                                 created_at: comment.created_at,
                                 canDelete: user.id === comment.user.id || user.id === post?.userId,
                             }}

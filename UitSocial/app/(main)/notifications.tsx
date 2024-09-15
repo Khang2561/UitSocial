@@ -23,6 +23,7 @@ const Notifications = () => {
     const getNotifications = async() =>{
         let res = await fetchNotifications(user.id);
         if(res.success){
+            console.log('Thong bao : ',res);
             setNotifications(res.data || []);
         }
     }

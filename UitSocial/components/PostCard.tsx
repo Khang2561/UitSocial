@@ -61,11 +61,6 @@ const PostCard = ({
     userId: currentUser?.id,
     postId: item?.id,
   };
-
-  console.log("-----------------------------------------------");
-  console.log("So like: ", likes?.length);
-  console.log("Comment: ", item?.comments);
-
   const texttyles = {
     color: theme.colors.dark,
     fontSize: hp(1.75),

@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 import React from "react";
 import { RichEditor, RichToolbar, actions } from 'react-native-pell-rich-editor';
 import { theme } from "@/constants/theme";
-
+import { useEffect } from "react";
 // Define the types for the props
 interface RichTextEditorProps {
   editorRef: React.RefObject<RichEditor>;
@@ -10,6 +10,11 @@ interface RichTextEditorProps {
 }
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ editorRef, onChange }) => {
+  
+  useEffect(() => {
+    console.log('Editor ref:', editorRef.current);
+  }, [editorRef]);
+
   return (
     <View style={{ minHeight: 285 }}>
       <RichToolbar
