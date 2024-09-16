@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from "react-native";
 import React from "react";
 import { RichEditor, RichToolbar, actions } from 'react-native-pell-rich-editor';
 import { theme } from "@/constants/theme";
-import { useEffect } from "react";
+import { useEffect,useState } from "react";
 // Define the types for the props
 interface RichTextEditorProps {
   editorRef: React.RefObject<RichEditor>;
@@ -12,41 +12,49 @@ interface RichTextEditorProps {
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ editorRef, onChange }) => {
   
   useEffect(() => {
-    console.log('Editor ref:', editorRef.current);
+    if (editorRef.current) {
+      editorRef.current.registerToolbar(() => {
+        setEditorAttached(true);
+      });
+    }
   }, [editorRef]);
 
+  const [editorAttached, setEditorAttached] = useState(false);
   return (
     <View style={{ minHeight: 285 }}>
-      <RichToolbar
-        actions={[
-          actions.setStrikethrough,
-          actions.removeFormat,
-          actions.setBold,
-          actions.setItalic,
-          actions.insertOrderedList,
-          actions.blockquote,
-          actions.alignLeft,
-          actions.alignCenter,
-          actions.alignRight,
-          actions.code,
-          actions.line,
-          actions.heading1,
-          actions.heading2,
-        ]}
-        iconMap={{
-          [actions.heading1]: ({ tintColor }: { tintColor: string }) => (
-            <Text style={{ color: tintColor }}>H1</Text>
-          ),
-          [actions.heading4]: ({ tintColor }: { tintColor: string }) => (
-            <Text style={{ color: tintColor }}>H4</Text>
-          ),
-        }}
-        style={styles.richBar}
-        flatContainerStyle={styles.flatStyle}
-        selectedIconTint={theme.colors.primaryDark}
-        editor={editorRef.current ?? undefined} // Use undefined if editorRef.current is null
-        disabled={false}
-      />
+      {
+         editorAttached && <RichToolbar
+         actions={[
+           actions.setStrikethrough,
+           actions.removeFormat,
+           actions.setBold,
+           actions.setItalic,
+           actions.insertOrderedList,
+           actions.blockquote,
+           actions.alignLeft,
+           actions.alignCenter,
+           actions.alignRight,
+           actions.code,
+           actions.line,
+           actions.heading1,
+           actions.heading2,
+         ]}
+         iconMap={{
+           [actions.heading1]: ({ tintColor }: { tintColor: string }) => (
+             <Text style={{ color: tintColor }}>H1</Text>
+           ),
+           [actions.heading4]: ({ tintColor }: { tintColor: string }) => (
+             <Text style={{ color: tintColor }}>H4</Text>
+           ),
+         }}
+         style={styles.richBar}
+         flatContainerStyle={styles.flatStyle}
+         selectedIconTint={theme.colors.primaryDark}
+         editor={editorRef.current ?? undefined} // Use undefined if editorRef.current is null
+         disabled={false}
+       />
+      }
+      
 
       <RichEditor
         ref={editorRef}

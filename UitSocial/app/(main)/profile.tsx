@@ -17,6 +17,8 @@ import { getSupabaseFileUrl } from '../../services/imageService';
 import { fetchPosts } from '@/services/postService';
 import PostCard from '@/components/PostCard';
 import Loading from '@/components/Loading';
+import { Animated } from "react-native";
+import { useEffect } from 'react';
 
 //-------------------------CONST------------------------------------------------------
 // Định nghĩa kiểu cho props của UserHeader
@@ -33,6 +35,29 @@ const Profile = () => {
   const router = useRouter();
   const [posts, setPosts] = useState<any[]>([]); //hàm chứ post 
   const [hasMore, setHasMore] = useState(true);
+  const [scrollY] = useState(new Animated.Value(0));
+  const [translateY, setTranslateY] = useState(new Animated.Value(0));
+
+
+  //cuon
+  useEffect(() => {
+    const listenerId = scrollY.addListener(({ value }) => {
+      Animated.timing(translateY, {
+        toValue: value > 50 ? 100 : 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    });
+
+    return () => {
+      scrollY.removeListener(listenerId);
+    };
+  }, [scrollY]);
+
+  const tabBarIconColor = (routeName: string) => {
+    return routeName === 'Profile' ? 'blue' : 'black'; // Thay đổi màu cho trang Profile
+  };
+
 
   const handleLogout = async () => {
     Alert.alert(
@@ -88,7 +113,7 @@ const Profile = () => {
     return (
       <View style={styles.headerContainer}>
         {/*Header profile */}
-        <Header title="Profile">
+        <Header title="Profile" showBackButton={false}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Icon1 name="logout" color={theme.colors.rose} size={20} />
           </TouchableOpacity>
@@ -199,6 +224,24 @@ const Profile = () => {
           </View>
         )}
       />
+      {/*********************Navbar start*********************/}
+      <Animated.View style={[styles.navbar, { transform: [{ translateY: translateY }] }]}>
+        <Pressable onPress={() => router.push('/(main)/home')}>
+          <Icon1 name="home" size={30} color={tabBarIconColor('Home')} />
+        </Pressable>
+        <Pressable onPress={() => router.push('/(main)/main')}>
+          <Icon2 name="message-circle" size={30} color={tabBarIconColor('Message')} />
+        </Pressable>
+        <Pressable onPress={() => router.push('/(main)/profile')}>
+          <Avatar
+            uri={getSupabaseFileUrl(user?.image)}
+            size={hp(4.3)}
+            rounded={theme.radius.sm}
+            style={{ borderWidth: 2, borderColor: tabBarIconColor('Profile') }} // Thay đổi borderColor cho avatar
+          />
+        </Pressable>
+      </Animated.View>
+      {/*********************Navbar end*********************/}
     </ScreenWrapper>
   );
 };
@@ -264,5 +307,19 @@ const styles = StyleSheet.create({
     fontSize: hp(2),
     textAlign: 'center',
     color: theme.colors.text,
+  },
+  navbar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: hp(7),
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    elevation: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#eaeaea',
   },
 });

@@ -1,4 +1,4 @@
-import { Alert, StyleSheet, Text, View, Image, Pressable, FlatList } from "react-native";
+import { Alert, StyleSheet, Text, View, Image, Pressable, FlatList, LogBox } from "react-native";
 import React, { useEffect, useState } from "react";
 import ScreenWrapper from "../../components/ScreenWrapprer";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,8 +15,10 @@ import Loading from "@/components/Loading";
 import { supabase } from "@/lib/supabase";
 import { getUserData } from "@/services/userService";
 import axios from 'axios';
+import { Animated } from "react-native";
 var limit = 0;
 
+LogBox.ignoreLogs(['Warning: TNodeChildrenRenderer', 'Warning: MemoizedTNodeRenderer', 'Warning: TRenderEngineProvider'])
 const Home = () => {
     //-------------------------CONST------------------------------------------------------
     const { user } = useAuth(); //lấy các thông tin người dùng
@@ -26,7 +28,6 @@ const Home = () => {
     const [hasMore, setHasMore] = useState(true);
     const [weatherIcon, setWeatherIcon] = useState<string>(''); // Trạng thái lưu trữ biểu tượng thời tiết
     const [notificationCount, setNotificationCount] = useState(0);
-
     //-------------------------Function------------------------------------------------------
     useEffect(() => {
         let postChannel = supabase
@@ -35,12 +36,12 @@ const Home = () => {
             .subscribe();
 
         fetchWeather();//hàm lấy thồi tiết 
-        
+
         let notificationChannel = supabase
-        .channel('notifications')
-        //.on('postgres_changes',{event:'INSERT',schema:'public', table:'notifications',filter:'receiverId=eq.${user.id}'},handleNewNotifications)
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `receiverId=eq.${user.id}` }, handleNewNotifications)
-        .subscribe();
+            .channel('notifications')
+            //.on('postgres_changes',{event:'INSERT',schema:'public', table:'notifications',filter:'receiverId=eq.${user.id}'},handleNewNotifications)
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `receiverId=eq.${user.id}` }, handleNewNotifications)
+            .subscribe();
 
         return () => {
             supabase.removeChannel(postChannel);
@@ -48,10 +49,11 @@ const Home = () => {
         }
     }, [])
 
-    const handleNewNotifications = async (payload:any)=>{
-        console.log('got new notifications: ',payload);
-        if(payload.eventType=='INSERT' && payload.new.id){
-            setNotificationCount(prev => prev +1);
+
+    const handleNewNotifications = async (payload: any) => {
+        console.log('got new notifications: ', payload);
+        if (payload.eventType == 'INSERT' && payload.new.id) {
+            setNotificationCount(prev => prev + 1);
         }
     }
 
@@ -70,7 +72,7 @@ const Home = () => {
                 return updatedPosts;
             });
             // Gọi lại hàm lấy dữ liệu sau khi xóa
-            getPosts(); 
+            getPosts();
         }
     };
 
@@ -78,7 +80,7 @@ const Home = () => {
     const getPosts = async () => {
         if (!hasMore) return null;
         limit = limit + 7;
-        let res = await fetchPosts(limit,null);  // Truyền giá trị limit vào hàm fetchPosts
+        let res = await fetchPosts(limit, null);  // Truyền giá trị limit vào hàm fetchPosts
         if (res.success && res.data) {
             if (posts.length == res.data.length) setHasMore(false);
             setPosts(res.data);  // Chỉ gọi setPosts nếu res.data không phải là undefined
@@ -119,18 +121,18 @@ const Home = () => {
                     <Text style={styles.title}>UitSocial</Text>
                     {/* Thêm biểu tượng thời tiết */}
                     <View style={styles.weatherContainer}>
-                            <Pressable onPress={() => router.push('/weatherUit')}>
-                            <Image 
-                                source={{ uri: `https:${weatherIcon}` }} 
-                                style={styles.weatherIcon} 
+                        <Pressable onPress={() => router.push('/weatherUit')}>
+                            <Image
+                                source={{ uri: `https:${weatherIcon}` }}
+                                style={styles.weatherIcon}
                             />
-                            </Pressable>
-                        </View>
+                        </Pressable>
+                    </View>
                     <View style={styles.icons}>
                         <Pressable onPress={() => router.push('/(main)/notifications')}>
                             <Icon name="heart" size={hp(3.8)} />
                             {
-                                notificationCount>0 && (
+                                notificationCount > 0 && (
                                     <View style={styles.pill}>
                                         <Text style={styles.pillText}>{notificationCount}</Text>
                                     </View>
@@ -140,7 +142,9 @@ const Home = () => {
                         <Pressable onPress={() => router.push('/(main)/newPost')}>
                             <Icon1 name="plus-square" size={hp(3.2)} />
                         </Pressable>
-                        <Pressable onPress={() => router.push('/(main)/profile')}>
+                        {
+                            /*
+                            <Pressable onPress={() => router.push('/(main)/profile')}>
                             <Avatar
                                 uri={uri}  // Ensure uri is a proper URL
                                 size={hp(4.3)}
@@ -148,6 +152,9 @@ const Home = () => {
                                 style={{ borderWidth: 2 }}
                             />
                         </Pressable>
+                            */
+                        }
+
                     </View>
                 </View>
                 {/*********************Header end*********************/}
@@ -264,4 +271,5 @@ const styles = StyleSheet.create({
         fontSize: hp(2),
         color: theme.colors.text,
     },
+    
 });

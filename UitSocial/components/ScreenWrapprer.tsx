@@ -9,11 +9,11 @@ interface ScreenWrapperProps {
 
 const ScreenWrapper: React.FC<ScreenWrapperProps> = ({ children, bg }) => {
     const insets = useSafeAreaInsets();  
-    const paddingTop = insets.top > 0 ? insets.top + 5 : 30;
+    const paddingTop = insets.top > 0 ? insets.top + 1 : 30;
 
     const containerStyle: ViewStyle = {
         flex: 1,
-        paddingTop,
+        paddingTop:20,
         backgroundColor: bg || 'white',
     };
 
