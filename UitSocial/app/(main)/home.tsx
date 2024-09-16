@@ -1,4 +1,4 @@
-import { Alert, StyleSheet, Text, View, Image, Pressable, FlatList } from "react-native";
+import { Alert, StyleSheet, Text, View, Image, Pressable, FlatList, LogBox } from "react-native";
 import React, { useEffect, useState } from "react";
 import ScreenWrapper from "../../components/ScreenWrapprer";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,8 +15,12 @@ import Loading from "@/components/Loading";
 import { supabase } from "@/lib/supabase";
 import { getUserData } from "@/services/userService";
 import axios from 'axios';
+import { Animated } from "react-native";
 var limit = 0;
 
+
+
+LogBox.ignoreLogs(['Warning: TNodeChildrenRenderer','Warning: MemoizedTNodeRenderer','Warning: TRenderEngineProvider'])
 const Home = () => {
     //-------------------------CONST------------------------------------------------------
     const { user } = useAuth(); //lấy các thông tin người dùng
@@ -26,7 +30,8 @@ const Home = () => {
     const [hasMore, setHasMore] = useState(true);
     const [weatherIcon, setWeatherIcon] = useState<string>(''); // Trạng thái lưu trữ biểu tượng thời tiết
     const [notificationCount, setNotificationCount] = useState(0);
-
+    const [scrollY] = useState(new Animated.Value(0));
+    const [translateY, setTranslateY] = useState(new Animated.Value(0));
     //-------------------------Function------------------------------------------------------
     useEffect(() => {
         let postChannel = supabase
@@ -47,6 +52,27 @@ const Home = () => {
             supabase.removeChannel(notificationChannel);
         }
     }, [])
+
+    //cuon
+    useEffect(() => {
+        const listenerId = scrollY.addListener(({ value }) => {
+            Animated.timing(translateY, {
+                toValue: value > 50 ? 100 : 0,
+                duration: 200,
+                useNativeDriver: true,
+            }).start();
+        });
+    
+        return () => {
+            scrollY.removeListener(listenerId);
+        };
+    }, [scrollY]);
+
+    const tabBarIconColor = (routeName: string) => {
+        // Thay đổi màu icon dựa trên tên route hiện tại
+        return routeName === 'Home' ? 'blue' : 'black';
+    };
+    
 
     const handleNewNotifications = async (payload:any)=>{
         console.log('got new notifications: ',payload);
@@ -140,7 +166,9 @@ const Home = () => {
                         <Pressable onPress={() => router.push('/(main)/newPost')}>
                             <Icon1 name="plus-square" size={hp(3.2)} />
                         </Pressable>
-                        <Pressable onPress={() => router.push('/(main)/profile')}>
+                        {
+                            /*
+                            <Pressable onPress={() => router.push('/(main)/profile')}>
                             <Avatar
                                 uri={uri}  // Ensure uri is a proper URL
                                 size={hp(4.3)}
@@ -148,6 +176,9 @@ const Home = () => {
                                 style={{ borderWidth: 2 }}
                             />
                         </Pressable>
+                            */
+                        }
+                        
                     </View>
                 </View>
                 {/*********************Header end*********************/}
@@ -184,6 +215,26 @@ const Home = () => {
                 />
 
                 {/*********************show post*********************/}
+
+                {/*********************Navbar start*********************/}
+            <Animated.View style={[styles.navbar, { transform: [{ translateY: translateY }] }]}>
+                <Pressable onPress={() => router.push('/(main)/home')}>
+                    <Icon1 name="home" size={30} color={tabBarIconColor('Home')} />
+                </Pressable>
+                <Pressable onPress={() => router.push('/(main)/home')}>
+                    <Icon1 name="message-circle" size={30} color={tabBarIconColor('Message')} />
+                </Pressable>
+                <Pressable onPress={() => router.push('/(main)/profile')}>
+                    {/* <Icon name="user" size={40} color={tabBarIconColor('Profile')} />*/} 
+                    <Avatar
+                                uri={uri}  // Ensure uri is a proper URL
+                                size={hp(4.3)}
+                                rounded={theme.radius.sm}
+                                style={{ borderWidth: 2 }}
+                            />
+                </Pressable>
+            </Animated.View>
+            {/*********************Navbar end*********************/}
             </View>
         </ScreenWrapper>
     );
@@ -263,5 +314,19 @@ const styles = StyleSheet.create({
     weatherCondition: {
         fontSize: hp(2),
         color: theme.colors.text,
+    },
+    navbar: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: hp(7),
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        alignItems: 'center',
+        backgroundColor: 'white',
+        elevation: 10,
+        borderTopWidth: 1,
+        borderTopColor: '#eaeaea',
     },
 });

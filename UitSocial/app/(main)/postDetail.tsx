@@ -177,8 +177,7 @@ const PostDetails = () => {
 
     return (
         <View style={styles.container}>
-            <Header title="Profile">
-        </Header>
+            <Header title="Profile"></Header>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
                 <PostCard
                     item={{ ...post, commentsCount: post?.comments?.length }}
