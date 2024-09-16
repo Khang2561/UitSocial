@@ -37,6 +37,7 @@ const MainLayout = () => {
                 console.log('Navigating to /home');
                 //router.replace('/(main)/main');
                 router.replace('/(main)/main');
+
             } else {
                 setAuth(null);
                 console.log('Navigating to /welcome');

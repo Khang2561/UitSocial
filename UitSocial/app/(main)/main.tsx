@@ -14,7 +14,7 @@ import ScreenWrapper from "@/components/ScreenWrapprer";
 
 const Main = () => {
     const [scrollY] = useState(new Animated.Value(0));
-    const [translateY, setTranslateY] = useState(new Animated.Value(0));
+    const [translateY] = useState(new Animated.Value(0));
     const [activeScreen, setActiveScreen] = useState('Home');
     const router = useRouter();
     const { user } = useAuth();
@@ -38,6 +38,10 @@ const Main = () => {
         return activeScreen === routeName ? 'blue' : 'black';
     };
 
+    const getAvatarStyle = (routeName: string) => {
+        return activeScreen === routeName ? { borderColor: 'blue', borderWidth: 2 } : { borderColor: 'transparent' };
+    };
+
     return (
         <ScreenWrapper bg="white">
             {activeScreen === 'Home' && <Home />}
@@ -57,7 +61,7 @@ const Main = () => {
                         uri={getSupabaseFileUrl(user?.image)}  // Ensure uri is a proper URL
                         size={hp(4.3)}
                         rounded={theme.radius.sm}
-                        style={{ borderWidth: 2 }}
+                        style={[{ borderWidth: 2 }, getAvatarStyle('Profile')]}  // Apply dynamic style
                     />
                 </Pressable>
             </Animated.View>

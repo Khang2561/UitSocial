@@ -224,29 +224,9 @@ const Profile = () => {
           </View>
         )}
       />
-      {/*********************Navbar start*********************/}
-      <Animated.View style={[styles.navbar, { transform: [{ translateY: translateY }] }]}>
-        <Pressable onPress={() => router.push('/(main)/home')}>
-          <Icon1 name="home" size={30} color={tabBarIconColor('Home')} />
-        </Pressable>
-        <Pressable onPress={() => router.push('/(main)/main')}>
-          <Icon2 name="message-circle" size={30} color={tabBarIconColor('Message')} />
-        </Pressable>
-        <Pressable onPress={() => router.push('/(main)/profile')}>
-          <Avatar
-            uri={getSupabaseFileUrl(user?.image)}
-            size={hp(4.3)}
-            rounded={theme.radius.sm}
-            style={{ borderWidth: 2, borderColor: tabBarIconColor('Profile') }} // Thay đổi borderColor cho avatar
-          />
-        </Pressable>
-      </Animated.View>
-      {/*********************Navbar end*********************/}
     </ScreenWrapper>
   );
 };
-
-
 
 export default Profile;
 //-------------------------CSS------------------------------------------------------
