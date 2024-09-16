@@ -12,6 +12,8 @@ import Icon from 'react-native-vector-icons/Feather';
 import CommentItem from "@/components/CommentItem";
 import { supabase } from "@/lib/supabase";
 import { getUserData } from "@/services/userService";
+import { createNotification } from "@/services/notificationService";
+import Header from "@/components/Header";
 
 LogBox.ignoreAllLogs(true);
 
@@ -35,7 +37,7 @@ type Post = {
 
 const PostDetails = () => {
     //-------------------------CONST------------------------------------------------------
-    const { postId } = useLocalSearchParams();
+    const { postId,commentId } = useLocalSearchParams();
     const [post, setPost] = useState<any>(null);
     const { user } = useAuth();
     const router = useRouter();
@@ -43,14 +45,33 @@ const PostDetails = () => {
     const inputRef = useRef<any>(null);
     const [loading, setLoading] = useState(false);
     const commentRef = useRef<string>('');
+
+    console.log('post detail post id: ',postId)
+    console.log('post detail comment id: ',commentId)
+    
+
+    //-------------------------Function------------------------------------------------------
+    useEffect(() => {
+        let commentChannel = supabase
+        .channel('comments')
+        .on('postgres_changes',{
+            event:'INSERT',
+            schema:'public',
+            table:'comments',
+            filter:'postId=eq.${postId}'
+        },handleNewComment)
+        .subscribe();
+        getPostDetails();
+        return () =>{
+            supabase.removeChannel(commentChannel);
+        }
+    }, []);
+    //reload lại sau khi add comment 
     const handleNewComment = async (payload: any) => {
-        console.log('got new comment', payload.new);
-    
         if (payload.new) {
-            let newComment = { ...payload.new };
-            let res = await getUserData(newComment.user.id);  // Sử dụng newComment.user.id
+            let newComment = { ...payload.new };//thêm comment mới vào array 
+            let res = await getUserData(newComment.user.id);  // add lên database 
             newComment.user = res.success ? res.data : {};
-    
             setPost((prevPost: Post | null) => {
                 if (prevPost) {
                     return {
@@ -62,26 +83,6 @@ const PostDetails = () => {
             });
         }
     };
-
-    //-------------------------Function------------------------------------------------------
-    useEffect(() => {
-        
-        let commentChannel = supabase
-        .channel('comments')
-        .on('postgres_changes',{
-            event:'INSERT',
-            schema:'public',
-            table:'comments',
-            filter:'postId=eq.${postId}'
-        },handleNewComment)
-        .subscribe();
-        getPostDetails();
-
-        return () =>{
-            supabase.removeChannel(commentChannel);
-        }
-
-    }, []);
     //show post details 
     const getPostDetails = async () => {
         let res = await fetchPostDetails(postId);
@@ -92,16 +93,30 @@ const PostDetails = () => {
     };
     //add new comment 
     const onNewComment = async () => {
-        if (!commentRef.current) return null;
+        if (!commentRef.current) return null;//nếu chưa nhập vào công ty nào thì trả về null 
         let data = {
             userId: user?.id,
             postId: post?.id,
             text: commentRef.current
         };
         setLoading(true);
-        let res = await createComment(data);
+        let res = await createComment(data);//upload lên database 
         setLoading(false);
         if (res.success) {
+            //gửi thông báo tới chủ post 
+            if(user.id!=post.userId){
+                //send notification 
+                let notify = {
+                    senderId: user.id,
+                    receiverId:post.userId,
+                    title:'commented on your post',
+                    data: JSON.stringify({
+                        postId: post.id,
+                        commentId:res?.data?.id
+                    })
+                }
+                createNotification(notify);//truyền lên data
+            }
             inputRef?.current?.clear();
             commentRef.current = "";
             // Cập nhật lại bài post với comment mới
@@ -112,8 +127,6 @@ const PostDetails = () => {
     };
     //delete comment 
     const onDeleteComment = async (comment: Comment) => {
-        console.log('deleting comment: ', comment);
-        console.log('deleting comment id: ', comment.id);
         let res = await removeComment(comment.id);
         if (res.success) {
             setPost((prevPost: any) => {
@@ -164,6 +177,7 @@ const PostDetails = () => {
 
     return (
         <View style={styles.container}>
+            <Header title="Profile"></Header>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
                 <PostCard
                     item={{ ...post, commentsCount: post?.comments?.length }}
@@ -172,11 +186,10 @@ const PostDetails = () => {
                     hasShadow={false}
                     showMoreIcon={false}
                     showDelete={true}
-                    onDelete ={onDeletePost}
+                    onDelete={onDeletePost}
                     onEdit={onEditPost}
                 />
 
-                {/* Comment input */}
                 <View style={{ flexDirection: 'row' }}>
                     <Input
                         style={styles.inputContainer}
@@ -199,19 +212,19 @@ const PostDetails = () => {
                     }
                 </View>
 
-                {/* Comment list */}
                 {
                     post?.comments?.map((comment: Comment) => (
                         <CommentItem
                             key={comment.id?.toString()}
                             item={{
-                                id: comment.id,  // Truyền id của comment vào đây
+                                id: comment.id,
                                 text: comment.text,
                                 user: {
                                     id: comment.user?.id,
                                     name: comment.user?.name,
                                     image: comment.user?.image,
                                 },
+                                highlight: comment.id.toString() === commentId?.toString(),
                                 created_at: comment.created_at,
                                 canDelete: user.id === comment.user.id || user.id === post?.userId,
                             }}

@@ -17,28 +17,21 @@ import { createOrUpdatePost } from '@/services/postService';
 import { RichEditor } from 'react-native-pell-rich-editor';
 
 // Ignore specific warnings
-LogBox.ignoreLogs(['Toolbar has no editor']);
-
-// Define the Post type
-interface Post {
-  id?: string;
-  body?: string | string[];
-  file?: string;
-}
+//LogBox.ignoreLogs(['Toolbar has no editor']);
 
 const NewPost = () => {
   //-------------------------CONST------------------------------------------------------
   const post = useLocalSearchParams<any>();
   const { user } = useAuth();
-  const bodyRef = useRef<string>("");
-  const editorRef = useRef<RichEditor | null>(null);
+  const bodyRef = useRef<string>('')
+  const editorRef = useRef<RichEditor>(null);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const uri = user?.image ? getSupabaseFileUrl(user.image) : null;
-
-  //-------------------------Function------------------------------------------------------
   const [isPostUpdated, setIsPostUpdated] = useState(false);
+  //-------------------------Function------------------------------------------------------
+  
 
   useEffect(() => {
     if (post && post.id && !isPostUpdated) {
@@ -175,6 +168,7 @@ const NewPost = () => {
           </View>
 
           <View style={styles.textEditor}>
+            {/*bug-----------*/}
             <RichTextEditor
               editorRef={editorRef}
               onChange={(body: string) => (bodyRef.current = body)}

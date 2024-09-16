@@ -1,5 +1,5 @@
-import { Alert, Pressable, StyleSheet, TouchableOpacity, View, Text } from 'react-native';
-import React from 'react';
+import { Alert, Pressable, StyleSheet, TouchableOpacity, View, Text, FlatList } from 'react-native';
+import React, { useState } from 'react';
 import ScreenWrapper from '@/components/ScreenWrapprer';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'expo-router';
@@ -14,6 +14,11 @@ import Avatar from '@/components/Avatar';
 import { User } from '../../entity/User';
 import Icon3 from 'react-native-vector-icons/Entypo';
 import { getSupabaseFileUrl } from '../../services/imageService';
+import { fetchPosts } from '@/services/postService';
+import PostCard from '@/components/PostCard';
+import Loading from '@/components/Loading';
+import { Animated } from "react-native";
+import { useEffect } from 'react';
 
 //-------------------------CONST------------------------------------------------------
 // Định nghĩa kiểu cho props của UserHeader
@@ -22,11 +27,37 @@ interface UserHeaderProps {
   router: ReturnType<typeof useRouter>;
   handleLogout: () => void;
 }
+var limit = 0;
 
 //-------------------------Function------------------------------------------------------
 const Profile = () => {
   const { user, setAuth } = useAuth();
   const router = useRouter();
+  const [posts, setPosts] = useState<any[]>([]); //hàm chứ post 
+  const [hasMore, setHasMore] = useState(true);
+  const [scrollY] = useState(new Animated.Value(0));
+  const [translateY, setTranslateY] = useState(new Animated.Value(0));
+
+
+  //cuon
+  useEffect(() => {
+    const listenerId = scrollY.addListener(({ value }) => {
+      Animated.timing(translateY, {
+        toValue: value > 50 ? 100 : 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    });
+
+    return () => {
+      scrollY.removeListener(listenerId);
+    };
+  }, [scrollY]);
+
+  const tabBarIconColor = (routeName: string) => {
+    return routeName === 'Profile' ? 'blue' : 'black'; // Thay đổi màu cho trang Profile
+  };
+
 
   const handleLogout = async () => {
     Alert.alert(
@@ -56,15 +87,33 @@ const Profile = () => {
     );
   };
 
+  //edit post 
+  const onEditPost = async (item: any) => {
+    router.back();
+    router.push({ pathname: '/(main)/newPost', params: { ...item } })
+  }
+  //hàm lấy api của bài post 
+  const getPosts = async () => {
+    if (!hasMore) return null;
+    limit = limit + 7;
+    let res = await fetchPosts(limit, user.id);  // Truyền giá trị limit vào hàm fetchPosts
+    if (res.success && res.data) {
+      if (posts.length == res.data.length) setHasMore(false);
+      setPosts(res.data);  // Chỉ gọi setPosts nếu res.data không phải là undefined
+    } else {
+      console.log('No posts found or fetch failed');
+      setPosts([]);  // Đặt giá trị mặc định là mảng rỗng nếu không có dữ liệu
+    }
+  };
+
   // Hình ảnh user 
   const UserHeader = ({ user, router, handleLogout }: UserHeaderProps) => {
     const imageUrl = getSupabaseFileUrl(user?.image);
 
-    console.log('Đường link hình ảnh:', imageUrl);
     return (
       <View style={styles.headerContainer}>
         {/*Header profile */}
-        <Header title="Profile">
+        <Header title="Profile" showBackButton={false}>
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Icon1 name="logout" color={theme.colors.rose} size={20} />
           </TouchableOpacity>
@@ -145,12 +194,39 @@ const Profile = () => {
   //-------------------------Main------------------------------------------------------
   return (
     <ScreenWrapper bg="white">
-      <UserHeader user={user} router={router} handleLogout={handleLogout} />
+      <FlatList
+        data={posts}
+        ListHeaderComponent={<UserHeader user={user} router={router} handleLogout={handleLogout} />}
+        showsVerticalScrollIndicator={false}//ẩn thanh scroll
+        contentContainerStyle={styles.listStyle}
+        keyExtractor={item => item.id.toString()}
+        renderItem={({ item }) => (
+          <PostCard
+            item={item}
+            currentUser={user}
+            router={router}
+            hasShadow={true} // Pass hasShadow prop here
+          />
+        )}
+        onEndReached={() => {
+          getPosts(); // process when reaching the end to add more posts
+        }}
+        onEndReachedThreshold={0}
+        ListFooterComponent={hasMore ? ( // loading icon
+          <View style={{ marginVertical: posts.length === 0 ? 200 : 30 }}>
+            <Loading />
+          </View>
+        ) : (
+          <View style={{ marginVertical: 30 }}>
+            <Text style={styles.noPosts}>
+              No more posts
+            </Text>
+          </View>
+        )}
+      />
     </ScreenWrapper>
   );
 };
-
-
 
 export default Profile;
 //-------------------------CSS------------------------------------------------------
@@ -202,5 +278,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  listStyle: {
+    paddingTop: 20,
+    paddingHorizontal: wp(4),
+  },
+  noPosts: {
+    fontSize: hp(2),
+    textAlign: 'center',
+    color: theme.colors.text,
+  },
+  navbar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: hp(7),
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    elevation: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#eaeaea',
   },
 });

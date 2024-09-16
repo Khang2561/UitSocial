@@ -17,7 +17,7 @@ const Header = ({ title, showBackButton = true, children }: HeaderProps) => {
   return (
     <View style={styles.container}>
       {showBackButton && (
-        <TouchableOpacity onPress={() => router.push('/(main)/home')} style={styles.button}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.button}>
           <Icon name="arrow-left" size={24} color={theme.colors.text} />
         </TouchableOpacity>
       )}

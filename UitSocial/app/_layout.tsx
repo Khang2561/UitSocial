@@ -35,7 +35,9 @@ const MainLayout = () => {
                 updateUserData(session?.user,session?.user.email);
                 console.log('auth user : ',session?.user?.email);
                 console.log('Navigating to /home');
-                router.replace('/(main)/home');
+                //router.replace('/(main)/main');
+                router.replace('/(main)/main');
+
             } else {
                 setAuth(null);
                 console.log('Navigating to /welcome');

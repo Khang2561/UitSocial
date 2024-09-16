@@ -92,9 +92,32 @@ export const removePostLike = async (postId: string, userId: string): Promise<Cr
 };
 
 //----------------------------------------truy xuất post-------------------------------------------------------------------------  
-export const fetchPosts = async (limit = 10) => {
+export const fetchPosts = async (limit = 10,userId:any) => {
     try {
-        const { data, error } = await supabase
+        if(userId){
+            const { data, error } = await supabase
+            .from('posts')
+            .select(`
+                *,
+                user:users (
+                    id,
+                    name,
+                    image
+                ),
+                postLikes(*),
+                comments(count)
+            `)  // Đảm bảo rằng bạn đang sử dụng count trong comments
+            .order('created_at', { ascending: false })
+            .eq('userId',userId)
+            .limit(limit);
+
+        if (error) {
+            console.log('fetchPost error: ', error);
+            return { success: false, msg: 'Không thể fetchPosts' };
+        }
+        return { success: true, data };
+        }else{
+            const { data, error } = await supabase
             .from('posts')
             .select(`
                 *,
@@ -114,6 +137,7 @@ export const fetchPosts = async (limit = 10) => {
             return { success: false, msg: 'Không thể fetchPosts' };
         }
         return { success: true, data };
+        }
     } catch (error) {
         console.log('fetchPosts: ', error);
         return { success: false, msg: 'Không thể fetchPosts' };
