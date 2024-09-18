@@ -52,7 +52,6 @@ const NewPost = () => {
       } else {
         setFile(null);
       }
-
       // Set content for RichTextEditor
       setTimeout(() => {
         editorRef.current?.setContentHTML(bodyContent);
@@ -62,6 +61,7 @@ const NewPost = () => {
     }
   }, [post, isPostUpdated]);
 
+  //Hàm chọn ảnh và video trong điện thoại 
   const onPick = async (isImage: boolean) => {
     let mediaConfig: ImagePicker.ImagePickerOptions = {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -83,6 +83,7 @@ const NewPost = () => {
     }
   };
 
+  //
   const isLocalFile = (file: any): file is ImagePicker.ImagePickerAsset => {
     return typeof file === 'object';
   };
@@ -99,14 +100,16 @@ const NewPost = () => {
     return 'video';
   };
 
+  //lấy link url
   const getFileUri = (file: ImagePicker.ImagePickerAsset | string | null): string | undefined => {
     if (!file) return undefined;
     if (isLocalFile(file)) {
-      return (file as ImagePicker.ImagePickerAsset).uri;
+      return (file as ImagePicker.ImagePickerAsset).uri;//trên điện thoai
     }
-    return getSupabaseFileUrl(file as string) || undefined;
+    return getSupabaseFileUrl(file as string) || undefined;// trên supubase 
   };
 
+  //Hàm đăng bài 
   const onSubmit = async () => {
     if (!bodyRef.current && !file) {
       Alert.alert('Post', "Vui lòng thêm ảnh hoặc nội dung post");
