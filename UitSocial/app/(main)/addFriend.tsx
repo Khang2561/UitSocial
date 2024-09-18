@@ -5,7 +5,7 @@ import { theme } from '@/constants/theme';
 import ScreenWrapper from '@/components/ScreenWrapprer';
 import { hp, wp } from '@/helpers/common';
 import Header from '@/components/Header';
-import { getAvailableUsersForFriends, sendFriendRequest, fetchFriendRequests, acceptFriendRequest } from '@/services/userService';
+import { getAvailableUsersForFriends, sendFriendRequest, fetchFriendRequests, acceptFriendRequest, rejectFriendRequest } from '@/services/userService';
 import { useAuth } from '@/contexts/AuthContext';
 import { getSupabaseFileUrl } from '@/services/imageService';
 import Icon2 from 'react-native-vector-icons/Feather';
@@ -160,17 +160,40 @@ const AddFriend = () => {
         if (result.success) {
             console.log("--------------xu ly yeu cau ket ban thanh cong ---------------")
             setSuccessRequestId(friendId); // Lưu ID của bạn bè vào state
-            
+
         } else {
             console.log("Lỗi chấp nhận kết bạn :", result.msg);
         }
     }
 
-    //sử lý hủy 
-    const handleCancelRequest = (friendId: string) => {
+    // Hàm hủy yêu cầu kết bạn
+    const handleCancelRequest = async (friendId: string) => {
+        try {
+            // Gọi API để hủy yêu cầu kết bạn
+            const result = await rejectFriendRequest(user.id, friendId);
 
-    }
+            if (result.success) {
+                console.log("Yêu cầu kết bạn đã bị hủy thành công.");
 
+                // Cập nhật danh sách friendRequests, loại bỏ yêu cầu đã bị hủy
+                setFriendRequests(prevRequests => prevRequests.filter(req => req.id !== friendId));
+
+                // Cập nhật danh sách filteredUsers để bỏ trạng thái bạn bè (nếu cần)
+                setFilteredUsers(prevUsers =>
+                    prevUsers.map(user =>
+                        user.id === friendId ? { ...user, isFriend: false } : user
+                    )
+                );
+            } else {
+                console.log("Lỗi khi hủy yêu cầu kết bạn:", result.msg);
+            }
+        } catch (error) {
+            console.error("Lỗi khi hủy yêu cầu kết bạn:", error);
+        }
+    };
+
+
+    //Render Item ket ban
     const renderItem = ({ item }: { item: any }) => (
         <Pressable onPress={() => handleSelectFriend(item)}>
             <View style={styles.friendItem}>
@@ -539,7 +562,7 @@ const styles = StyleSheet.create({
     cancelButtonText: {
         color: '#fff',
     },
-    successMessage:{
-        color:'green',
+    successMessage: {
+        color: 'green',
     }
 });
