@@ -274,25 +274,49 @@ export const acceptFriendRequest = async (userId1: string, userId2: string) => {
 };
 
 
-
-
-// Từ chối yêu cầu kết bạn
 export const rejectFriendRequest = async (userId1: string, userId2: string) => {
-    try {
-        const { error } = await supabase
-            .from('friends')
-            .delete()
-            .eq('user_id1', userId1)
-            .eq('user_id2', userId2);
+    console.log('userId1:', userId1);
+    console.log('userId2:', userId2);
 
-        if (error) {
+    try {
+        // Kiểm tra dữ liệu trước khi xóa
+        const { data, error: selectError } = await supabase
+            .from('friends')
+            .select('*')
+            .or(`and(user_id1.eq.${userId1},user_id2.eq.${userId2}),and(user_id1.eq.${userId2},user_id2.eq.${userId1})`);
+
+        console.log('Data trước khi xóa:', data);
+
+        if (selectError) {
+            console.error('Lỗi khi kiểm tra dữ liệu:', selectError);
             return {
                 success: false,
-                msg: error.message,
+                msg: selectError.message,
             };
         }
 
-        return { success: true };
+        // Nếu tìm thấy kết quả, tiến hành xóa
+        if (data && data.length > 0) {
+            const { error: deleteError } = await supabase
+                .from('friends')
+                .delete()
+                .or(`and(user_id1.eq.${userId1},user_id2.eq.${userId2}),and(user_id1.eq.${userId2},user_id2.eq.${userId1})`);
+
+            if (deleteError) {
+                console.error('Lỗi khi xóa yêu cầu kết bạn:', deleteError);
+                return {
+                    success: false,
+                    msg: deleteError.message,
+                };
+            }
+
+            return { success: true };
+        } else {
+            return {
+                success: false,
+                msg: 'Không tìm thấy yêu cầu kết bạn để xóa.',
+            };
+        }
     } catch (error: unknown) {
         if (error instanceof Error) {
             return {
@@ -307,4 +331,8 @@ export const rejectFriendRequest = async (userId1: string, userId2: string) => {
         }
     }
 };
+
+
+
+
 //-----------------------------------------------
