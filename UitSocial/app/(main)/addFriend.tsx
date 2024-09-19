@@ -303,9 +303,11 @@ const AddFriend = () => {
                 <ScreenWrapper>
                     <ScrollView>
                         <View>
+                            {/*Header */}
                             <Header title='Trang bạn bè' showBackButton={false} />
                             {selectedFriend && (
                                 <View style={{ gap: 15 }}>
+                                    {/*Avatar */}
                                     <View style={styles.avatarContainer}>
                                         <Avatar
                                             uri={getSupabaseFileUrl(selectedFriend?.image) || "https://via.placeholder.com/150"}
@@ -313,10 +315,12 @@ const AddFriend = () => {
                                             rounded={theme.radius.xxl * 1.4}
                                         />
                                     </View>
+                                    {/*Tên và khoa*/}
                                     <View style={{ alignItems: 'center', gap: 4 }}>
                                         <Text style={styles.userNamePR}>{selectedFriend?.name}</Text>
                                         <Text style={styles.infoText}>Khoa khoa học và kĩ thuật máy tính</Text>
                                     </View>
+                                    {/*Thông tin*/}
                                     <View style={{ gap: 10 }}>
                                         <View style={styles.info}>
                                             <Icon3 name="email" size={20} color={theme.colors.textLight} />
@@ -351,6 +355,14 @@ const AddFriend = () => {
                                 </View>
                             )}
                         </View>
+                        {/*----------------------------Icon thêm bạn hoặc chấp nhận----------------------------------------- */}
+                        <View>
+                            <Text>Kết bạn</Text>
+                            <Text>Chấp nhận</Text>
+                            <Text>Từ chối</Text>
+                        </View>
+                        {/*----------------------------Icon thêm bạn hoặc chấp nhận----------------------------------------- */}
+                        {/*----------------------Các bài post------------------------------- */}
                         <FlatList
                             data={posts}
                             showsVerticalScrollIndicator={false}
@@ -380,6 +392,7 @@ const AddFriend = () => {
                                 </View>
                             )}
                         />
+                        {/*----------------------Các bài post------------------------------- */}
                     </ScrollView>
                 </ScreenWrapper>
             </Modal>
