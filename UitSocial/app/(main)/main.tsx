@@ -11,6 +11,8 @@ import { theme } from '@/constants/theme';
 import Home from "./home";
 import Profile from "./profile"; // Ensure Profile component is imported
 import ScreenWrapper from "@/components/ScreenWrapprer";
+import ChatList from "./chatList";
+
 
 const Main = () => {
     const [scrollY] = useState(new Animated.Value(0));
@@ -45,7 +47,7 @@ const Main = () => {
     return (
         <ScreenWrapper bg="white">
             {activeScreen === 'Home' && <Home />}
-            {activeScreen === 'Message' && <Profile />}
+            {activeScreen === 'Message' && <ChatList />}
             {activeScreen === 'Profile' && <Profile />}
 
             {/*********************Navbar start*********************/}
