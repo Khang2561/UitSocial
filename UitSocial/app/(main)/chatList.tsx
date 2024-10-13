@@ -1,18 +1,16 @@
 import ScreenWrapper from "@/components/ScreenWrapprer"
-import React, { FC, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { wp } from "@/helpers/common";
 import { Text, StyleSheet, View, FlatList } from 'react-native';
 import { SearchBar } from 'react-native-elements';
 import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "expo-router";
 import ChatItem from "@/components/ChatItem";
-import { getAvailableUsers, getUserData } from "@/services/userService";
 import Loading from '@/components/Loading';
+import { getAvailableUsers } from "@/services/chatService";
 
 
 const ChatList: React.FC = () => {
     const {user} = useAuth();
-    const router = useRouter();
     const [search, setSearch] = useState(""); 
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
@@ -49,8 +47,6 @@ const ChatList: React.FC = () => {
                     placeholder="Search"
                     value={search}
                     onChangeText={updateSearch}
-                    lightTheme
-                    round
                     containerStyle={styles.searchContainer}
                     inputContainerStyle={styles.searchInputContainer}
                     inputStyle={styles.searchInput}
@@ -59,7 +55,8 @@ const ChatList: React.FC = () => {
           
           <View>
             {loading ? (
-                <Loading /> // Display a loading component
+                <Loading 
+                /> // Display a loading component
             ) : users.length === 0 ? (
                 <Text>No users found</Text>
             ) : (

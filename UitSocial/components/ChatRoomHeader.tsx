@@ -4,16 +4,14 @@ import { TouchableOpacity, View, StyleSheet, Text } from "react-native";
 import Icon from "react-native-vector-icons/Feather";
 import Avatar from '@/components/Avatar';
 import { getSupabaseFileUrl } from "@/services/imageService";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface ChatRoomHeaderProps {
   showBackButton?: boolean;
+  user: any; 
 }
-
-const ChatRoomHeader = ({ showBackButton = true }: ChatRoomHeaderProps) =>  {
+const ChatRoomHeader = ({ user, showBackButton = true }: ChatRoomHeaderProps) =>  {
     const router = useRouter();
-    const { user } = useAuth();
-
+    
     const handleCallPress = () => {
         console.log("Call pressed");
     };
