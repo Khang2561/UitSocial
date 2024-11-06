@@ -1,30 +1,29 @@
-import ScreenWrapper from "@/components/ScreenWrapprer"
+import ScreenWrapper from "@/components/ScreenWrapprer";
 import React, { useEffect, useState } from 'react';
 import { wp } from "@/helpers/common";
-import { Text, StyleSheet, View, FlatList } from 'react-native';
-import { SearchBar } from 'react-native-elements';
+import { Text, StyleSheet, View, FlatList, TextInput } from 'react-native';
 import { useAuth } from "@/contexts/AuthContext";
 import ChatItem from "@/components/ChatItem";
 import Loading from '@/components/Loading';
 import { getAvailableUsers } from "@/services/chatService";
-
+import Icon from 'react-native-vector-icons/MaterialIcons'; // Ensure you have this library installed
 
 const ChatList: React.FC = () => {
-    const {user} = useAuth();
+    const { user } = useAuth();
     const [search, setSearch] = useState(""); 
     const [users, setUsers] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+
     const updateSearch = (searchText: string) => {
         setSearch(searchText);
-    };
+    }; 
 
-    const getUser = async ()=>{
+    const getUser = async () => {
         setLoading(true);
         try {
-            const res = await getAvailableUsers(user.id); // Call the function with the current user id
-            console.log(res); 
+            const res = await getAvailableUsers(user.id);
             if (res.success) {
-                setUsers(res.data || []); // Update the state with the fetched users
+                setUsers(res.data || []);
             } else {
                 console.error(res.msg); 
             }
@@ -33,45 +32,49 @@ const ChatList: React.FC = () => {
         } finally {
             setLoading(false);
         }     
-    }
+    };
 
     useEffect(() => {
         getUser();
-    },[user.id])
+    }, [user.id]);
+
+    // Filter users based on the search input
+    const filteredUsers = users.filter(u => 
+        u.name.toLowerCase().includes(search.toLowerCase())
+    );
 
     return (
         <ScreenWrapper>
-          <View style={styles.header}>
+            <View style={styles.header}>
                 <Text style={styles.title}>Chats</Text>
-                <SearchBar
-                    placeholder="Search"
-                    value={search}
-                    onChangeText={updateSearch}
-                    containerStyle={styles.searchContainer}
-                    inputContainerStyle={styles.searchInputContainer}
-                    inputStyle={styles.searchInput}
-                />
-          </View>
+                <View style={styles.searchContainer}>
+                    <Icon name="search" size={20} color="#888" style={styles.searchIcon} />
+                    <TextInput
+                        placeholder="Search"
+                        value={search}
+                        onChangeText={updateSearch}
+                        style={styles.searchInput}
+                    />
+                </View>
+            </View>
           
-          <View>
-            {loading ? (
-                <Loading 
-                /> // Display a loading component
-            ) : users.length === 0 ? (
-                <Text>No users found</Text>
-            ) : (
-                <FlatList
-                    data={users}
-                    contentContainerStyle={{ flexGrow: 1, paddingVertical: 25 }}
-                    keyExtractor={(item) => item.id}
-                    showsVerticalScrollIndicator={false}
-                    renderItem={({ item }) => <ChatItem item={item} />}
-                />
-            )}
-          </View>
-
+            <View>
+                {loading ? (
+                    <Loading/>
+                ) : filteredUsers.length === 0 ? (
+                    <Text>No users found</Text>
+                ) : (
+                    <FlatList
+                        data={filteredUsers} 
+                        contentContainerStyle={{ flexGrow: 1, paddingVertical: 25 }}
+                        keyExtractor={(item) => item.id}
+                        showsVerticalScrollIndicator={false}
+                        renderItem={({ item }) => <ChatItem item={item} />}
+                    />
+                )}
+            </View>
         </ScreenWrapper>
-      );
+    );
 };
 
 const styles = StyleSheet.create({
@@ -86,31 +89,26 @@ const styles = StyleSheet.create({
         marginBottom: 10,
         marginHorizontal: wp(4),
     },
-    item: {
-        padding: 20,
-        borderBottomWidth: 1,
-        borderBottomColor: '#ccc',
-    },
     title: {
         fontSize: 18,
         fontWeight: 'bold'
     },
     searchContainer: {
-        backgroundColor: 'transparent',
-        borderTopWidth: 0,
-        borderBottomWidth: 0,
-        width: '100%',
-    },
-    searchInputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
         backgroundColor: '#e6e6e6',
         borderRadius: 10,
-        height: 40, 
+        height: 40,
+        width: '100%',
+        paddingHorizontal: 10,
+    },
+    searchIcon: {
+        marginRight: 8,
     },
     searchInput: {
-        color: '#000', 
+        flex: 1,
+        color: '#000',
     },
-  });
-  
-  export default ChatList;
+});
 
-
+export default ChatList;
