@@ -14,6 +14,7 @@ import Profile from "./profile"; // Ensure Profile component is imported
 import ScreenWrapper from "@/components/ScreenWrapprer";
 import AddFriend from "../(main)/addFriend";
 
+
 const Main = () => {
     //-------------------------------CONST-----------------------------------------------
     const [scrollY] = useState(new Animated.Value(0));
