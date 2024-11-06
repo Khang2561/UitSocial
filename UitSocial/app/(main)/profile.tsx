@@ -47,6 +47,7 @@ const Profile = () => {
         duration: 200,
         useNativeDriver: true,
       }).start();
+      
     });
 
     return () => {

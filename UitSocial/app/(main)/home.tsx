@@ -26,7 +26,7 @@ const Home = () => {
     const [posts, setPosts] = useState<any[]>([]); // Hàm chứa post 
     const [hasMore, setHasMore] = useState(true);
     const [weatherIcon, setWeatherIcon] = useState<string>(''); // Trạng thái lưu trữ biểu tượng thời tiết
-    const [notificationCount, setNotificationCount] = useState(0);
+    const [notificationCount, setNotificationCount] = useState(0);//thông báo comment mới 
     const [scrollY] = useState(new Animated.Value(0));
     const [translateY] = useState(new Animated.Value(0));
 
@@ -63,14 +63,14 @@ const Home = () => {
             scrollY.removeListener(listenerId);
         };
     }, [scrollY, translateY]);
-
+    //THông báo nếu có comment mới vào bài viết của mình 
     const handleNewNotifications = async (payload: any) => {
         console.log('got new notifications: ', payload);
         if (payload.eventType === 'INSERT' && payload.new.id) {
             setNotificationCount(prev => prev + 1);
         }
     };
-
+    //Khi chạm vào bài viết 
     const handlePostEvent = async (payload: any) => {
         if (payload.event === 'INSERT' && payload.new.id) {
             const newPost = { ...payload.new };
@@ -86,7 +86,7 @@ const Home = () => {
             getPosts();
         }
     };
-
+    //Lấy các bài post 
     const getPosts = async () => {
         if (!hasMore) return;
         let limit = posts.length + 7;
@@ -98,7 +98,7 @@ const Home = () => {
             setPosts([]);
         }
     };
-
+    //api lấy thông tin thời tiết 
     const fetchWeather = async () => {
         try {
             const response = await axios.get(

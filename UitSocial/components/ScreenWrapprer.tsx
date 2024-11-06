@@ -13,7 +13,7 @@ const ScreenWrapper: React.FC<ScreenWrapperProps> = ({ children, bg }) => {
 
     const containerStyle: ViewStyle = {
         flex: 1,
-        paddingTop:20,
+        paddingTop:22,
         backgroundColor: bg || 'white',
     };
 

@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from 'expo-router';
 import Icon1 from 'react-native-vector-icons/AntDesign';
 import Icon2 from 'react-native-vector-icons/Feather';
+import IconAddFriend from 'react-native-vector-icons/Ionicons';
 import Avatar from '@/components/Avatar';
 import { getSupabaseFileUrl } from '../../services/imageService';
 import { hp } from '@/helpers/common';
@@ -11,16 +12,18 @@ import { theme } from '@/constants/theme';
 import Home from "./home";
 import Profile from "./profile"; // Ensure Profile component is imported
 import ScreenWrapper from "@/components/ScreenWrapprer";
-import ChatList from "./chatList";
+import AddFriend from "../(main)/addFriend";
 
 
 const Main = () => {
+    //-------------------------------CONST-----------------------------------------------
     const [scrollY] = useState(new Animated.Value(0));
     const [translateY] = useState(new Animated.Value(0));
     const [activeScreen, setActiveScreen] = useState('Home');
     const router = useRouter();
     const { user } = useAuth();
 
+    //-------------------------------FUNCTION-----------------------------------------------
     // Animation for navbar
     useEffect(() => {
         const listenerId = scrollY.addListener(({ value }) => {
@@ -35,29 +38,38 @@ const Main = () => {
             scrollY.removeListener(listenerId);
         };
     }, [scrollY]);
-
+    // hight light for selected icon
     const tabBarIconColor = (routeName: string) => {
         return activeScreen === routeName ? 'blue' : 'black';
     };
-
+    // hight light for avatar icon
     const getAvatarStyle = (routeName: string) => {
         return activeScreen === routeName ? { borderColor: 'blue', borderWidth: 2 } : { borderColor: 'transparent' };
     };
 
+    //-------------------------------MAIN-----------------------------------------------
     return (
         <ScreenWrapper bg="white">
             {activeScreen === 'Home' && <Home />}
-            {activeScreen === 'Message' && <ChatList />}
+            {activeScreen === 'addFriend' && <AddFriend/>}
+            {activeScreen === 'Message' && <Profile />}
             {activeScreen === 'Profile' && <Profile />}
 
             {/*********************Navbar start*********************/}
             <Animated.View style={[styles.navbar, { transform: [{ translateY: translateY }] }]}>
+                {/*--------Home-------*/}
                 <Pressable onPress={() => setActiveScreen('Home')}>
                     <Icon1 name="home" size={30} color={tabBarIconColor('Home')} />
                 </Pressable>
+                {/*--------Add friend-------*/}
+                <Pressable onPress={() => setActiveScreen('addFriend')}>
+                    <IconAddFriend name="person-add-outline" size={30} color={tabBarIconColor('addFriend')} />
+                </Pressable>
+                {/*--------Message-------*/}
                 <Pressable onPress={() => setActiveScreen('Message')}>
                     <Icon2 name="message-circle" size={30} color={tabBarIconColor('Message')} />
                 </Pressable>
+                {/*--------Profile-------*/}
                 <Pressable onPress={() => setActiveScreen('Profile')}>
                     <Avatar
                         uri={getSupabaseFileUrl(user?.image)}  // Ensure uri is a proper URL
@@ -73,7 +85,7 @@ const Main = () => {
 };
 
 export default Main;
-
+//-------------------------------CSS-----------------------------------------------
 const styles = StyleSheet.create({
     navbar: {
         position: 'absolute',
