@@ -13,6 +13,7 @@ import Home from "./home";
 import Profile from "./profile"; // Ensure Profile component is imported
 import ScreenWrapper from "@/components/ScreenWrapprer";
 import AddFriend from "../(main)/addFriend";
+import ChatList from "./chatList";
 
 
 const Main = () => {
@@ -52,7 +53,7 @@ const Main = () => {
         <ScreenWrapper bg="white">
             {activeScreen === 'Home' && <Home />}
             {activeScreen === 'addFriend' && <AddFriend/>}
-            {activeScreen === 'Message' && <Profile />}
+            {activeScreen === 'Message' && <ChatList />}
             {activeScreen === 'Profile' && <Profile />}
 
             {/*********************Navbar start*********************/}
