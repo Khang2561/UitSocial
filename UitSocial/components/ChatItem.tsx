@@ -50,14 +50,14 @@ const styles = StyleSheet.create({
     container: {
         flexDirection: 'row',
         padding: 10,
-        alignItems: 'center',  // Ensure vertical alignment
+        alignItems: 'center',  
     },
     avatar: {
         height: hp(8),
         width: hp(8),
         borderRadius: hp(8) / 2,
         aspectRatio: 1,
-        flexShrink: 0,  // Prevent shrinking of the avatar image
+        flexShrink: 0,  
     },
     textContainer: {
         marginLeft: 10,
@@ -71,16 +71,16 @@ const styles = StyleSheet.create({
     messageRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'center',  // Align text items in the same row
+        alignItems: 'center',  
     },
     latestMessage: {
         fontSize: 14,
-        color: '#666',  // Gray color for the latest message
-        flexShrink: 1,  // Ensure message text shrinks if needed
+        color: '#666',  
+        flexShrink: 1,  
     },
     time: {
         fontSize: 12,
-        color: '#aaa',  // Lighter gray for the timestamp
+        color: '#aaa',  
     },
 });
 

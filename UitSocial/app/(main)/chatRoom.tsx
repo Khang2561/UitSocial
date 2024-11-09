@@ -21,6 +21,7 @@ const ChatRoom = () => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<any[]>([]);
   const [text, setText] = useState("");
+  const [loadingPrevMessages, setLoadingPrevMessages] = useState(false);
 
   useEffect(() => {
     const loadMessages = async () => {
@@ -77,7 +78,7 @@ const ChatRoom = () => {
         setMessages((prevMessages) =>
           prevMessages.some((msg) => msg.id === result.data[0].id)
             ? prevMessages // Avoid duplicate
-            : [...prevMessages, result.data[0]]
+            : [result.data[0], ...prevMessages]
         );
       } else {
         console.error(result.msg || "Failed to send the message.");
@@ -87,12 +88,37 @@ const ChatRoom = () => {
     }
   };
 
+  const handleLoadPrevMessages = async () => {
+    if (loadingPrevMessages || !messages || messages.length === 0) return;
+
+    setLoadingPrevMessages(true);
+
+    const roomId = await getRoomId(user.id, item.id);
+    const offset = messages.length; // Calculate offset as the current message count
+
+    try {
+        const result = await fetchMessages(roomId, 20, offset);
+
+        if (result.success && result.data.length > 0) {
+            setMessages((prevMessages) => [...prevMessages, ...result.data]);
+        } else if (result.data.length === 0) {
+            console.log("No more messages to load");
+        }
+    } catch (error) {
+        console.error("Error loading older messages:", error);
+    } finally {
+        setLoadingPrevMessages(false);
+    }
+};
+
+
+
+
   return (
     <ScreenWrapper>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0} // Adjust if needed
       >
         <View style={styles.container}>
           <ChatRoomHeader user={item} />
@@ -102,6 +128,7 @@ const ChatRoom = () => {
               messages={messages}
               currentUser={user}
               receiver={item}
+              onLoadPrevMessages={handleLoadPrevMessages}
             />
           </View>
 
@@ -152,6 +179,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     elevation: 3,
+    padding: 10,
   },
   input: {
     flex: 1,
