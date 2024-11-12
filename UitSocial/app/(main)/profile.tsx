@@ -1,4 +1,4 @@
-import { Alert, Pressable, StyleSheet, TouchableOpacity, View, Text, FlatList } from 'react-native';
+import { Alert, Pressable, StyleSheet, TouchableOpacity, View, Text, FlatList, Modal, TextInput } from 'react-native';
 import React, { useState } from 'react';
 import ScreenWrapper from '@/components/ScreenWrapprer';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,7 +19,8 @@ import PostCard from '@/components/PostCard';
 import Loading from '@/components/Loading';
 import { Animated } from "react-native";
 import { useEffect } from 'react';
-
+import Icon4 from 'react-native-vector-icons/Fontisto';
+import ListFriend from '@/components/ListFriend';
 //-------------------------CONST------------------------------------------------------
 // Định nghĩa kiểu cho props của UserHeader
 interface UserHeaderProps {
@@ -29,8 +30,8 @@ interface UserHeaderProps {
 }
 var limit = 0;
 
-//-------------------------Function------------------------------------------------------
 const Profile = () => {
+  //--------------------------------Const----------------------------------------------
   const { user, setAuth } = useAuth();
   const router = useRouter();
   const [posts, setPosts] = useState<any[]>([]); //hàm chứ post 
@@ -38,7 +39,9 @@ const Profile = () => {
   const [scrollY] = useState(new Animated.Value(0));
   const [translateY, setTranslateY] = useState(new Animated.Value(0));
 
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
+  //-------------------------Function------------------------------------------------------
   //cuon
   useEffect(() => {
     const listenerId = scrollY.addListener(({ value }) => {
@@ -47,7 +50,7 @@ const Profile = () => {
         duration: 200,
         useNativeDriver: true,
       }).start();
-      
+
     });
 
     return () => {
@@ -59,7 +62,7 @@ const Profile = () => {
     return routeName === 'Profile' ? 'blue' : 'black'; // Thay đổi màu cho trang Profile
   };
 
-
+  //Hàm đăng xuất 
   const handleLogout = async () => {
     Alert.alert(
       'Xác nhận',
@@ -88,11 +91,6 @@ const Profile = () => {
     );
   };
 
-  //edit post 
-  const onEditPost = async (item: any) => {
-    router.back();
-    router.push({ pathname: '/(main)/newPost', params: { ...item } })
-  }
   //hàm lấy api của bài post 
   const getPosts = async () => {
     if (!hasMore) return null;
@@ -110,7 +108,6 @@ const Profile = () => {
   // Hình ảnh user 
   const UserHeader = ({ user, router, handleLogout }: UserHeaderProps) => {
     const imageUrl = getSupabaseFileUrl(user?.image);
-
     return (
       <View style={styles.headerContainer}>
         {/*Header profile */}
@@ -144,7 +141,7 @@ const Profile = () => {
             <View style={{ gap: 10 }}>
               {/*email*/}
               <View style={styles.info}>
-                <Icon1 name="email" size={20} color={theme.colors.textLight} />
+                <Icon4 name='email' size={20} color={theme.colors.textLight} />
                 <Text style={styles.infoText}>
                   {user && user.email ? user.email : 'email@default.com'}
                 </Text>
@@ -181,12 +178,61 @@ const Profile = () => {
                   </View>
                 )
               }
-              {/*Các thông tin sau này*/}
+              {/*--------------------Danh sách bạn bè--------------------------------*/}
+              <View style={styles.friendListHeader}>
+                <Text style={styles.friendListTitle}>Danh sách bạn bè</Text>
+                <TouchableOpacity onPress={() => setIsModalVisible(true)}>
+                  <Text>Xem thêm</Text>
+                </TouchableOpacity>
+              </View>
 
+              <View style={styles.friendTableShow}>
+                {/*----------------Bạn bè 1------------------------ */}
+                <View style={styles.friendContainer}>
+                  <TouchableOpacity>
+                    <Avatar
+                      uri={getSupabaseFileUrl(user?.image)}
+                      size={hp(11)} // Điều chỉnh kích thước avatar nhỏ hơn một chút
+                      rounded={theme.radius.xxl * 1.2}
+                    />
+                    <Text style={styles.friendTableShowText}>{user && user.name ? user.name : 'User'}</Text>
+                  </TouchableOpacity>
+                </View>
+                {/*----------------Bạn bè 2------------------------ */}
+                <View style={styles.friendContainer}>
+                  <TouchableOpacity>
+                    <Avatar
+                      uri={getSupabaseFileUrl(user?.image)}
+                      size={hp(11)} // Điều chỉnh kích thước avatar nhỏ hơn một chút
+                      rounded={theme.radius.xxl * 1.2}
+                    />
+                    <Text style={styles.friendTableShowText}>{user && user.name ? user.name : 'User'}</Text>
+                  </TouchableOpacity>
+                </View>
+                {/*----------------Bạn bè 3------------------------ */}
+                <View style={styles.friendContainer}>
+                  <TouchableOpacity>
+                    <Avatar
+                      uri={getSupabaseFileUrl(user?.image)}
+                      size={hp(11)} // Điều chỉnh kích thước avatar nhỏ hơn một chút
+                      rounded={theme.radius.xxl * 1.2}
+                    />
+                    <Text style={styles.friendTableShowText}>{user && user.name ? user.name : 'User'}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
-
           </View>
         </View>
+        {/*Modal hiển thị thông tin danh sách bạn bè*/}
+        <Modal
+          visible={isModalVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setIsModalVisible(false)}
+        >
+          <ListFriend userID={user?.id}/>
+        </Modal>
       </View>
 
     );
@@ -303,4 +349,50 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#eaeaea',
   },
+  //------------------------------------------------------------
+  friendListHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between', // Căn đều giữa tiêu đề và nút "Xem thêm"
+    alignItems: 'center',
+    marginBottom: 10, // Khoảng cách phía dưới tiêu đề
+  },
+  friendListTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: theme.colors.textDark,
+  },
+  seeMoreText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'blue', // Màu xanh lá cho chữ "Xem thêm"
+    textAlign: 'right', // Căn phải
+  },
+  friendTableShow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between', // Giãn đều các phần tử
+    alignItems: 'center',
+    marginVertical: 10, // Thêm khoảng cách giữa các dòng bạn bè
+    paddingHorizontal: 10, // Thêm padding cho hai bên
+  },
+  friendContainer: {
+    alignItems: 'center', // Căn giữa các avatar và tên bạn bè
+    justifyContent: 'center',
+    width: wp(25), // Giới hạn độ rộng của mỗi khung bạn bè
+  },
+  friendTableShowText: {
+    fontSize: hp(1.8),
+    fontWeight: '500',
+    color: theme.colors.textDark,
+    textAlign: 'center', // Căn giữa tên bạn bè
+    marginTop: 8, // Khoảng cách giữa avatar và tên
+  },
+  //---------------------------------------------------
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'white',
+  },
+  
+
 });
