@@ -91,13 +91,18 @@ export const sendMessage = async (userId: string, roomId: string, message: strin
 }
 
 // Fetch messages from a chat room
-export const fetchMessages = async (roomId: string): Promise<ApiResponse> => {
+export const fetchMessages = async (
+    roomId: string,
+    limit: number = 20,
+    offset: number = 0
+): Promise<ApiResponse> => {
     try {
         const { data, error } = await supabase
             .from('messages')
             .select('*')
             .eq('roomId', roomId)
-            .order('created_at', { ascending: true });
+            .order('created_at', { ascending: false }) // Order by latest messages first
+            .range(offset, offset + limit - 1); // Use range for offset-based pagination
 
         if (error) throw new Error(`Error fetching messages: ${error.message}`);
 
@@ -105,4 +110,5 @@ export const fetchMessages = async (roomId: string): Promise<ApiResponse> => {
     } catch (error) {
         return handleSupabaseError(error, "Failed to fetch messages");
     }
-}
+};
+

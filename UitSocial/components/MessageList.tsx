@@ -1,6 +1,5 @@
-import React, { useRef, useEffect, useCallback } from "react";
-import { StyleSheet, View } from "react-native";
-import { FlashList, FlashListProps } from "@shopify/flash-list";
+import React, { useRef, useCallback, useState } from "react";
+import { FlatList, FlatListProps, StyleSheet, View } from "react-native";
 import MessageItem from "./MessageItem";
 import Avatar from "./Avatar";
 import { getSupabaseFileUrl } from "@/services/imageService";
@@ -16,19 +15,13 @@ interface MessageListProps {
     messages: Message[];
     currentUser: { id: string };
     receiver: any;
+    onLoadPrevMessages: () => void;
 }
 
-const MessagesList = ({ messages, currentUser, receiver }: MessageListProps) => {
-    const flashListRef = useRef<FlashList<Message>>(null);
+const MessagesList = ({ messages, currentUser, receiver, onLoadPrevMessages }: MessageListProps) => {
+    const flatListRef = useRef<FlatList<Message>>(null);
 
-    // Scroll to the latest message when new messages are added
-    useEffect(() => {
-        if (messages.length > 0) {
-            flashListRef.current?.scrollToEnd({ animated: true });
-        }
-    }, [messages]);
-
-    const renderItem: FlashListProps<Message>["renderItem"] = useCallback(
+    const renderItem: FlatListProps<Message>["renderItem"] = useCallback(
         ({ item, index }: { item: Message; index: number }) => {
             const isReceiver = item.senderId === receiver.id;
             const isCurrentUser = item.senderId === currentUser.id;
@@ -36,7 +29,7 @@ const MessagesList = ({ messages, currentUser, receiver }: MessageListProps) => 
             // Show avatar only for the last message in a series from the receiver
             const isLastReceiverMessage =
                 isReceiver &&
-                (index === messages.length - 1 || messages[index + 1].senderId !== receiver.id);
+                (index === 0 || messages[index - 1].senderId !== receiver.id);
 
             return (
                 <View
@@ -62,19 +55,22 @@ const MessagesList = ({ messages, currentUser, receiver }: MessageListProps) => 
     );
 
     return (
-        <FlashList
-            ref={flashListRef}
+        <FlatList
+            ref={flatListRef}
             data={messages}
             renderItem={renderItem}
             keyExtractor={(item) => item.id}
-            estimatedItemSize={60} // Set an estimated item height for optimized layout calculation
-            contentContainerStyle={styles.flashList}
+            inverted={true} // Make sure the list is inverted to show the latest messages at the bottom
+            contentContainerStyle={styles.flatList}
+            onEndReached={onLoadPrevMessages} // Trigger the function when reaching the end of the list
+            onEndReachedThreshold={0.5} // Adjust as needed for when to trigger
         />
     );
+    
 };
 
 const styles = StyleSheet.create({
-    flashList: {
+    flatList: {
         paddingTop: 10,
     },
     messageContainer: {
