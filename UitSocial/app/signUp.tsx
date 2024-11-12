@@ -25,23 +25,25 @@ const SignUp = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     //-------------------------Function------------------------------------------------------
+    //Xử lý nút submit 
     const onSubmit = async () => {
+        //Nếu chưa điền đẩy đủ thông tin 
         if (!email || !password || !name || !confirmPassword) {
             Alert.alert('Đăng kí', "Bạn phải điền đầy đủ thông tin");
             return;
         }
-
+        //Nếu nhập 2 password không khớp nhau 
         if (password !== confirmPassword) {
             Alert.alert('Đăng kí', "Mật khẩu không khớp");
             return;
         }
-
+        //Lấy thông tin
         let emailSign = email.trim();
         let nameSign = name.trim();  
         let passwordSign = password.trim();
-
+        //chờ sử lý dữ liệu 
         setLoading(true);
-
+        //Đưa lên csdl
         const { data: { session }, error } = await supabase.auth.signUp({
             email: emailSign,
             password: passwordSign,
@@ -51,12 +53,12 @@ const SignUp = () => {
                 }
             }
         });
-
+        //HỦY LOADING
         setLoading(false);
 
         console.log('session: ', session);
         console.log('error', error);
-
+        //Xuất thông báo nếu xảy ra lỗi
         if (error) {
             Alert.alert('Sign up', error.message);
         }

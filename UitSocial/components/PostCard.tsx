@@ -19,8 +19,10 @@ import Header from "./Header";
 import { getUserData } from "@/services/userService";
 import Loading from "./Loading";
 
-LogBox.ignoreLogs(['Warning: TNodeChildrenRenderer', 'Warning: MemoizedTNodeRenderer', 'Warning: TRenderEngineProvider']);
 LogBox.ignoreLogs([
+  'Warning: TNodeChildrenRenderer',
+  'Warning: MemoizedTNodeRenderer',
+  'Warning: TRenderEngineProvider',
   'WARN  You seem to update props of the "TRenderEngineProvider" component in short periods of time',
   'Another warning message you want to ignore',
 ]);
@@ -38,25 +40,26 @@ type ShareContent = {
   url?: string; // Make url optional
 };*/
 
-const PostCard = ({
-  item,
-  currentUser,
-  router,
-  hasShadow = true,
-  showMoreIcon = true,
-  showDelete = false,
-  onDelete = () => { },
-  onEdit = () => { },
-}: {
+const PostCard = (props: {
   item: any,
   currentUser: any,
   router: any,
-  hasShadow: boolean,
-  showMoreIcon: boolean
-  showDelete: boolean
-  onDelete: (onDeletePost: any) => void;
-  onEdit: (onEditPos: any) => void;
+  hasShadow?: boolean,
+  showMoreIcon?: boolean,
+  showDelete?: boolean,
+  onDelete?: (post: any) => void;
+  onEdit?: (post: any) => void;
 }) => {
+  const {
+    item,
+    currentUser,
+    router,
+    hasShadow = true,
+    showMoreIcon = true,
+    showDelete = false,
+    onDelete = () => { },
+    onEdit = () => { },
+  } = props;
   //-------------------------CONST------------------------------------------------------
   const [likes, setLikes] = useState<Like[]>([]);//lấy danh sách like 
   const userImageUri = item?.user?.image ? getSupabaseFileUrl(item.user.image) : null;// lấy đường link chính thức từ supabase 
