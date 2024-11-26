@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import ScreenWrapper from "@/components/ScreenWrapprer";
 import Icon from 'react-native-vector-icons/Feather';
 import Icon1 from 'react-native-vector-icons/MaterialIcons';
+import Icon3 from 'react-native-vector-icons/FontAwesome';
 import { theme } from "../constants/theme";
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from "expo-router";
@@ -17,14 +18,16 @@ const Login = () => {
     const [email, setEmail] = useState(''); // Khai báo state cho email
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     //-------------------------Function------------------------------------------------------
+    
+    //SỰ KIỆN NÚT BẤM 
     const onSubmit = async () => {
         if (!email || !password) {
             Alert.alert('Login', "Bạn phải điền đầy đủ thông tin");
             return;
         }
-
         let emailLog = email.trim();
         let passwordLog = password.trim();
         setLoading(true);
@@ -32,9 +35,7 @@ const Login = () => {
             email,
             password
         });
-
         setLoading(false);
-
         console.log('error:', error);
         if (error) {
             Alert.alert('Login', error.message);
@@ -73,14 +74,21 @@ const Login = () => {
                         icon={<Icon1 name="password" size={26} />}
                         placeholder='Nhập vào mật khẩu của bạn'
                         onChangeText={(value: string) => setPassword(value)} // Chỉ định kiểu cho value
-                        secureTextEntry
+                        secureTextEntry={!showPassword}
                         value={password} // Đặt giá trị cho TextInput
+                        rightIcon={
+                            <Icon3
+                                name={showPassword ? "eye-slash" : "eye"}
+                                size={20}
+                                color={theme.colors.text}
+                            />
+                        }
+                        onRightIconPress={() => setShowPassword(!showPassword)}
                     />
                     <Text
                         style={style.forgotPassword}
                         onPress={() => {
-                            // Điều hướng hoặc xử lý quên mật khẩu ở đây
-                            Alert.alert('Quên mật khẩu', 'Tính năng này chưa được triển khai!');
+                            router.push('/(main)/ForgetPassword');
                         }}>
                         Bạn quên mật khẩu ?
                     </Text>

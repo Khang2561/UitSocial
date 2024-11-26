@@ -21,7 +21,8 @@ import { Animated } from "react-native";
 import { useEffect } from 'react';
 import Icon4 from 'react-native-vector-icons/Fontisto';
 import ListFriend from '@/components/ListFriend';
-//-------------------------CONST------------------------------------------------------
+import { getUserFriendsList } from '@/services/userService'
+//----------------------------------------------------------------CONST------------------------------------------------------
 // Định nghĩa kiểu cho props của UserHeader
 interface UserHeaderProps {
   user: User | null;
@@ -31,7 +32,7 @@ interface UserHeaderProps {
 var limit = 0;
 
 const Profile = () => {
-  //--------------------------------Const----------------------------------------------
+  //-------------------------------------------------------------CONST--------------------------------------------------------
   const { user, setAuth } = useAuth();
   const router = useRouter();
   const [posts, setPosts] = useState<any[]>([]); //hàm chứ post 
@@ -41,8 +42,10 @@ const Profile = () => {
 
   const [isModalVisible, setIsModalVisible] = useState(false);
 
-  //-------------------------Function------------------------------------------------------
-  //cuon
+  const [friends, setFriends] = useState<any[]>([]);
+
+  //-------------------------------------------------------------FUNCTION------------------------------------------------------
+  //------------------Cuộn trang--------------------- 
   useEffect(() => {
     const listenerId = scrollY.addListener(({ value }) => {
       Animated.timing(translateY, {
@@ -52,17 +55,27 @@ const Profile = () => {
       }).start();
 
     });
-
     return () => {
       scrollY.removeListener(listenerId);
     };
   }, [scrollY]);
 
-  const tabBarIconColor = (routeName: string) => {
-    return routeName === 'Profile' ? 'blue' : 'black'; // Thay đổi màu cho trang Profile
-  };
+  //----------lấy danh sách bạn bè------------------------- 
+  useEffect(() => {
+    const loadFriends = async () => {
+      if (user?.id) {
+        const result = await getUserFriendsList(user.id);
+        if (result.success && result.data) {
+          setFriends(result.data);
+        } else {
+          console.error(result.msg || 'Không thể lấy danh sách bạn bè');
+        }
+      }
+    };
+    loadFriends();
+  }, [user]);
 
-  //Hàm đăng xuất 
+  //-------------------Hàm đăng xuất---------------------- 
   const handleLogout = async () => {
     Alert.alert(
       'Xác nhận',
@@ -91,7 +104,12 @@ const Profile = () => {
     );
   };
 
-  //hàm lấy api của bài post 
+  //-------------------Setting page----------------------
+  const settingPage = async () =>{
+    router.push('/(main)/changePassword')
+  }
+
+  //------------hàm lấy api của bài post---------------------- 
   const getPosts = async () => {
     if (!hasMore) return null;
     limit = limit + 7;
@@ -105,16 +123,23 @@ const Profile = () => {
     }
   };
 
-  // Hình ảnh user 
+  //----------------Thông tin của user----------------------- 
   const UserHeader = ({ user, router, handleLogout }: UserHeaderProps) => {
     const imageUrl = getSupabaseFileUrl(user?.image);
     return (
       <View style={styles.headerContainer}>
         {/*Header profile */}
         <Header title="Profile" showBackButton={false}>
+          {/*Setting */}
+          <TouchableOpacity style={styles.settingButton} onPress={settingPage}>
+            <Icon name="setting" color={theme.colors.dark} size={20} />
+          </TouchableOpacity>
+
+          {/*Logout*/}
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Icon1 name="logout" color={theme.colors.rose} size={20} />
           </TouchableOpacity>
+          
         </Header>
         {/*main*/}
         <View style={styles.container}>
@@ -134,9 +159,8 @@ const Profile = () => {
             {/*info user */}
             <View style={{ alignItems: 'center', gap: 4 }}>
               <Text style={styles.userName}>{user && user.name ? user.name : 'User'}</Text>
-              <Text style={styles.infoText}>Khoa khoa học và kĩ thuật máy tính</Text>
+              <Text style={styles.infoText}>{user && user.Khoa ? user.Khoa : 'Chưa xác định khoa'}</Text>
             </View>
-
             {/*email, phone, bio */}
             <View style={{ gap: 10 }}>
               {/*email*/}
@@ -179,48 +203,25 @@ const Profile = () => {
                 )
               }
               {/*--------------------Danh sách bạn bè--------------------------------*/}
-              <View style={styles.friendListHeader}>
-                <Text style={styles.friendListTitle}>Danh sách bạn bè</Text>
-                <TouchableOpacity onPress={() => setIsModalVisible(true)}>
+              <TouchableOpacity onPress={() => setIsModalVisible(true)}>
+                <View style={styles.friendListHeader}>
+                  <Text style={styles.friendListTitle}>Danh sách bạn bè</Text>
                   <Text>Xem thêm</Text>
-                </TouchableOpacity>
-              </View>
+                </View>
 
-              <View style={styles.friendTableShow}>
-                {/*----------------Bạn bè 1------------------------ */}
-                <View style={styles.friendContainer}>
-                  <TouchableOpacity>
-                    <Avatar
-                      uri={getSupabaseFileUrl(user?.image)}
-                      size={hp(11)} // Điều chỉnh kích thước avatar nhỏ hơn một chút
-                      rounded={theme.radius.xxl * 1.2}
-                    />
-                    <Text style={styles.friendTableShowText}>{user && user.name ? user.name : 'User'}</Text>
-                  </TouchableOpacity>
+                <View style={styles.friendTableShow}>
+                  {friends.slice(0, 3).map((friend, index) => (
+                    <View key={friend.id} style={styles.friendContainer}>
+                      <Avatar
+                        uri={friend.avatar_url ? getSupabaseFileUrl(friend.avatar_url) : "https://via.placeholder.com/150"} // Đường dẫn ảnh từ Supabase
+                        size={hp(11)}
+                        rounded={theme.radius.xxl * 1.2}
+                      />
+                      <Text style={styles.friendTableShowText}>{friend.name || 'User'}</Text>
+                    </View>
+                  ))}
                 </View>
-                {/*----------------Bạn bè 2------------------------ */}
-                <View style={styles.friendContainer}>
-                  <TouchableOpacity>
-                    <Avatar
-                      uri={getSupabaseFileUrl(user?.image)}
-                      size={hp(11)} // Điều chỉnh kích thước avatar nhỏ hơn một chút
-                      rounded={theme.radius.xxl * 1.2}
-                    />
-                    <Text style={styles.friendTableShowText}>{user && user.name ? user.name : 'User'}</Text>
-                  </TouchableOpacity>
-                </View>
-                {/*----------------Bạn bè 3------------------------ */}
-                <View style={styles.friendContainer}>
-                  <TouchableOpacity>
-                    <Avatar
-                      uri={getSupabaseFileUrl(user?.image)}
-                      size={hp(11)} // Điều chỉnh kích thước avatar nhỏ hơn một chút
-                      rounded={theme.radius.xxl * 1.2}
-                    />
-                    <Text style={styles.friendTableShowText}>{user && user.name ? user.name : 'User'}</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
+              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -231,7 +232,7 @@ const Profile = () => {
           animationType="slide"
           onRequestClose={() => setIsModalVisible(false)}
         >
-          <ListFriend userID={user?.id}/>
+          <ListFriend friend={friends} />
         </Modal>
       </View>
 
@@ -286,7 +287,14 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     position: 'absolute',
-    right: 10, // Điều chỉnh vị trí nếu cần
+    right:-30, // Điều chỉnh vị trí nếu cần
+    padding: 10,
+    borderRadius: theme.radius.sm,
+    backgroundColor: 'rgba(0,0,0,0.07)',
+  },
+
+  settingButton: {
+    marginRight: 30,
     padding: 10,
     borderRadius: theme.radius.sm,
     backgroundColor: 'rgba(0,0,0,0.07)',
@@ -393,6 +401,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'white',
   },
-  
+
 
 });

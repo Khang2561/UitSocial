@@ -1,25 +1,25 @@
 import { createContext, useContext, useState, ReactNode } from "react";
 
-// Định nghĩa kiểu cho context
 interface AuthContextType {
     user: any; // Bạn có thể thay đổi `any` thành kiểu dữ liệu chính xác của user
-    setAuth: (authUser: any) => void; // Cập nhật kiểu cho các hàm
+    setAuth: (authUser: any) => void;
     setUserData: (userData: any) => void;
+    clearUserData: () => void; // Thêm hàm để xóa dữ liệu người dùng khi đăng xuất
 }
 
-// Tạo context với giá trị mặc định
 const AuthContext = createContext<AuthContextType>({
     user: null,
-    setAuth: () => {}, // Cung cấp giá trị mặc định cho các hàm
+    setAuth: () => {},
     setUserData: () => {},
+    clearUserData: () => {}, // Cung cấp hàm mặc định cho việc xóa dữ liệu
 });
 
 interface AuthProviderProps {
-    children: ReactNode; // Chỉ định kiểu cho children
+    children: ReactNode;
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-    const [user, setUser] = useState<any>(null); // Bạn có thể thay đổi `any` thành kiểu dữ liệu chính xác của user
+    const [user, setUser] = useState<any>(null);
 
     const setAuth = (authUser: any) => {
         setUser(authUser);
@@ -29,8 +29,12 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         setUser({ ...userData });
     };
 
+    const clearUserData = () => {
+        setUser(null); // Xóa dữ liệu người dùng khi đăng xuất
+    };
+
     return (
-        <AuthContext.Provider value={{ user, setAuth, setUserData }}>
+        <AuthContext.Provider value={{ user, setAuth, setUserData, clearUserData }}>
             {children}
         </AuthContext.Provider>
     );

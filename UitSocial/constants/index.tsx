@@ -1,2 +1,4 @@
 export const supabaseUrl = 'https://tgyocznasjcamtneakiv.supabase.co'
+
+//https://tgyocznasjcamtneakiv.supabase.co/storage/v1/object/public/uploads/profiles/1726327106001.png
 export const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRneW9jem5hc2pjYW10bmVha2l2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjU0MTk0NjgsImV4cCI6MjA0MDk5NTQ2OH0.kePTpyCQIiazS_Bnq1a-K5InobLb-cBcg9PLnXd4QGc'

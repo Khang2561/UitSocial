@@ -7,34 +7,36 @@ import { getSupabaseFileUrl } from "@/services/imageService";
 
 interface ChatRoomHeaderProps {
   showBackButton?: boolean;
-  user: any; 
+  user: any;
 }
-const ChatRoomHeader = ({ user, showBackButton = true }: ChatRoomHeaderProps) =>  {
-    const router = useRouter();
-    
-    const handleCallPress = () => {
-        console.log("Call pressed");
-    };
+const ChatRoomHeader = ({ user, showBackButton = true }: ChatRoomHeaderProps) => {
+  const router = useRouter();
 
-    const handleVideoCallPress = () => {
-        console.log("Video call pressed");
-    };
+  const handleCallPress = () => {
+    console.log("Call pressed");
+  };
 
-    return (
-        <View style={styles.container}>
-            {showBackButton && (
-                <TouchableOpacity onPress={() => router.back()} style={styles.button}>
-                    <Icon name="arrow-left" size={24} color={theme.colors.text} />
-                </TouchableOpacity>
-            )}
+  const handleVideoCallPress = () => {
+    console.log("Video call pressed");
+  };
 
-            <Avatar 
-                uri={getSupabaseFileUrl(user?.image) || "https://via.placeholder.com/150"}
-                style={styles.avatar}
-            />
-            <Text style={styles.userName}>{user.name}</Text>
+  return (
+    <View style={styles.container}>
+      {showBackButton && (
+        <TouchableOpacity onPress={() => router.back()} style={styles.button}>
+          <Icon name="arrow-left" size={24} color={theme.colors.text} />
+        </TouchableOpacity>
+      )}
 
-            <View style={styles.iconsContainer}>
+      <Avatar
+        uri={getSupabaseFileUrl(user?.image) || "https://via.placeholder.com/150"}
+        style={styles.avatar}
+      />
+      <Text style={styles.userName}>{user.name}</Text>
+
+      {/*Tính năng đang phát triển*/}
+      {/*
+             <View style={styles.iconsContainer}>
                 <TouchableOpacity onPress={handleCallPress} style={styles.iconButton}>
                     <Icon name="phone" size={24} color={theme.colors.text} />
                 </TouchableOpacity>
@@ -42,8 +44,9 @@ const ChatRoomHeader = ({ user, showBackButton = true }: ChatRoomHeaderProps) =>
                     <Icon name="video" size={24} color={theme.colors.text} />
                 </TouchableOpacity>
             </View>
-        </View>
-    );
+            */}
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
@@ -71,7 +74,7 @@ const styles = StyleSheet.create({
   iconsContainer: {
     flexDirection: 'row',
     position: 'absolute',
-    right: 10, 
+    right: 10,
     alignItems: 'center',
   },
   iconButton: {

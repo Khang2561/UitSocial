@@ -1,20 +1,23 @@
-import { StyleSheet, Text, View, Pressable, Alert, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
+import { StyleSheet, Text, View, Pressable, Alert, ScrollView, KeyboardAvoidingView, Platform, Modal, TouchableOpacity, FlatList } from "react-native";
 import React, { useState } from "react";
 import ScreenWrapper from "@/components/ScreenWrapprer";
-import Icon from 'react-native-vector-icons/Feather'; 
-import Icon1 from 'react-native-vector-icons/MaterialIcons'; 
-import Icon2 from 'react-native-vector-icons/SimpleLineIcons'; 
+import Icon from 'react-native-vector-icons/Feather';
+import Icon1 from 'react-native-vector-icons/MaterialIcons';
+import Icon2 from 'react-native-vector-icons/SimpleLineIcons';
 import Icon3 from 'react-native-vector-icons/FontAwesome';
+import Icon4 from 'react-native-vector-icons/Ionicons';
 import { theme } from "../constants/theme";
-import { StatusBar } from 'expo-status-bar'; 
+import { StatusBar } from 'expo-status-bar';
 import { useRouter } from "expo-router";
 import { wp, hp } from '../helpers/common';
 import Input from "@/components/Input";
 import Button from "@/components/Button";
 import { supabase } from "../lib/supabase";
+import RNPickerSelect from "react-native-picker-select";
+import { fillKhoa } from "@/services/userService";
 
 const SignUp = () => {
-    //-------------------------CONST------------------------------------------------------
+    //-------------------------------------CONST------------------------------------------------------
     const router = useRouter();
     const [email, setEmail] = useState('');
     const [name, setName] = useState('');
@@ -23,133 +26,236 @@ const SignUp = () => {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [selectedDepartment, setSelectedDepartment] = useState(""); //chọn khoa
+    const [modalVisible, setModalVisible] = useState(false); // Hiển thị modal
+    //------------------------------------FUNCTION------------------------------------------------------
 
-    //-------------------------Function------------------------------------------------------
+    const departments = [
+        { label: "Khoa Khoa học máy tính", value: "Khoa Khoa học máy tính" },
+        { label: "Khoa Công nghệ phần mềm", value: "Khoa Công nghệ phần mềm" },
+        { label: "Khoa Kỹ thuật máy tính", value: "Khoa Kỹ thuật máy tính" },
+        { label: "Khoa Hệ thống thông tin", value: "Khoa Hệ thống thông tin" },
+        { label: "Khoa Mạng máy tính và truyền thông", value: "Khoa Mạng máy tính và truyền thông" },
+        { label: "Khoa Khoa học và Kỹ thuật Thông tin", value: "Khoa Khoa học và Kỹ thuật Thông tin" },
+    ];
+
+    const handleSelectDepartment = (department: string) => {
+        setSelectedDepartment(department);
+        setModalVisible(false); // Đóng modal sau khi chọn khoa
+    };
+
+    //Kiểm tra định dạng email
+    const isValidEmail = (email: any) => {
+        const regex = /^[A-Za-z0-9]+@gm\.uit\.edu\.vn$/; // Kiểm tra email có đúng định dạng MSSV@gm.uit.edu.vn
+        return regex.test(email);
+    }
+
+    //Kiểm tra mật khẩu 
+    const isValidPassword = (password: any) => {
+        const regex = /^(?=.*[A-Z])(?=.*[a-z])(?=.*[0-9]).{10,}$/; // Mật khẩu phải có ít nhất 1 chữ hoa, 1 chữ thường, 1 số và hơn 9 ký tự
+        return regex.test(password);
+    }
+
     //Xử lý nút submit 
     const onSubmit = async () => {
-        //Nếu chưa điền đẩy đủ thông tin 
+        //------------Nếu chưa điền đẩy đủ thông tin------------------ 
         if (!email || !password || !name || !confirmPassword) {
             Alert.alert('Đăng kí', "Bạn phải điền đầy đủ thông tin");
             return;
         }
-        //Nếu nhập 2 password không khớp nhau 
+
+        //--------------Kiểm tra định dạng email----------------------
+        if (!isValidEmail(email)) {
+            Alert.alert('Đăng kí', "Email phải có định dạng MSSV@gm.uit.edu.vn");
+            return;
+        }
+
+        //----------------Kiểm tra mật khẩu----------------------------
+        if (!isValidPassword(password)) {
+            Alert.alert('Đăng kí', "Mật khẩu phải có ít nhất 10 ký tự, bao gồm chữ hoa, chữ thường và số");
+            return;
+        }
+
+        //--------Nếu nhập 2 password không khớp nhau---------------- 
         if (password !== confirmPassword) {
             Alert.alert('Đăng kí', "Mật khẩu không khớp");
             return;
         }
-        //Lấy thông tin
+        //-------------------Chọn khoa-----------------------------------
+        if (!selectedDepartment) {
+            Alert.alert("Đăng kí", "Bạn phải chọn khoa");
+            return;
+        }
+
+        //---------------Lấy thông tin start-------------------------------
         let emailSign = email.trim();
-        let nameSign = name.trim();  
+        let nameSign = name.trim();
         let passwordSign = password.trim();
-        //chờ sử lý dữ liệu 
-        setLoading(true);
-        //Đưa lên csdl
-        const { data: { session }, error } = await supabase.auth.signUp({
-            email: emailSign,
-            password: passwordSign,
-            options:{
-                data:{
-                    name
-                }
-            }
-        });
-        //HỦY LOADING
+        let khoaSign = selectedDepartment.trim();
+
+        // HỦY LOADING
         setLoading(false);
 
-        console.log('session: ', session);
-        console.log('error', error);
-        //Xuất thông báo nếu xảy ra lỗi
-        if (error) {
-            Alert.alert('Sign up', error.message);
+        // Đưa lên csdl
+        const { data: { user }, error: signUpError } = await supabase.auth.signUp({
+            email: emailSign,
+            password: passwordSign,
+            options: {
+                data: {
+                    name: nameSign, // Lưu tên người dùng vào metadata
+                },
+            },
+        });
+
+        // Xử lý lỗi trong quá trình đăng ký
+        if (signUpError) {
+            Alert.alert('Sign up', signUpError.message);
+            return;
         }
+
+        // Nếu đăng ký thành công, tiếp tục cập nhật thông tin người dùng
+        if (user) {
+            const id = user.id; // Lấy ID của người dùng từ kết quả đăng ký
+            const updateResult = await fillKhoa(emailSign, khoaSign, id);
+
+            if (updateResult.success) {
+                Alert.alert('Đăng ký thành công', 'Tài khoản đã được tạo thành công');
+                // Chuyển hướng đến trang khác nếu cần
+            } else {
+                Alert.alert('Đăng ký', `Cập nhật thông tin thất bại: ${updateResult.msg}`);
+            }
+        }
+       
+        //---------------Lấy thông tin end-------------------------------
     };
 
-    //-------------------------Main------------------------------------------------------
+    //--------------------------------------MAIN------------------------------------------------------
     return (
         <ScreenWrapper bg="white">
-           <StatusBar style="dark" />
-           <KeyboardAvoidingView
-               style={style.container}
-               behavior={Platform.OS === "ios" ? "padding" : "height"}
-               keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
-           >
-               <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-                   {/* NÚT NHẤN CALL BACK */}
-                   <Pressable onPress={() => router.push('/welcome')} style={style.button}>
-                       <Icon name="arrow-left" size={24} color={theme.colors.text} />
-                   </Pressable>
+            <StatusBar style="dark" />
+            <KeyboardAvoidingView
+                style={style.container}
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+            >
+                <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+                    {/*---------- NÚT NHẤN CALL BACK-------------*/}
+                    <Pressable onPress={() => router.push('/welcome')} style={style.button}>
+                        <Icon name="arrow-left" size={24} color={theme.colors.text} />
+                    </Pressable>
 
-                   {/* Welcome */}
-                   <View>
-                       <Text style={style.welcomeText}>Chào,</Text>
-                       <Text style={style.welcomeText}>UIT SOCIAL</Text>
-                   </View>
+                    {/*----------------WELLCOME------------------*/}
+                    <View>
+                        <Text style={style.welcomeText}>Chào,</Text>
+                        <Text style={style.welcomeText}>UIT SOCIAL</Text>
+                    </View>
 
-                   {/* FORM */}
-                   <View style={style.form}>
-                       <Text style={{ fontSize: hp(1.5), color: theme.colors.text }}>
-                           Vui lòng điền đầy đủ các thông tin
-                       </Text>
-                       <Input
-                           icon={<Icon name="mail" size={26} />}
-                           placeholder='Nhập vào email của bạn'
-                           onChangeText={(value: string) => setEmail(value)}
-                           value={email}
-                       />
-                       <Input
-                           icon={<Icon2 name="user" size={26} />}
-                           placeholder='Nhập vào tên của bạn'
-                           onChangeText={(value: string) => setName(value)}
-                           value={name}
-                       />
-                       <Input
-                           icon={<Icon1 name="password" size={26} />}
-                           placeholder='Nhập vào mật khẩu của bạn'
-                           onChangeText={(value: string) => setPassword(value)}
-                           secureTextEntry={!showPassword}
-                           value={password}
-                           rightIcon={
-                               <Pressable onPress={() => setShowPassword(!showPassword)}>
-                                   <Icon3
-                                       name={showPassword ? "eye-slash" : "eye"}
-                                       size={20}
-                                       color={theme.colors.text}
-                                   />
-                               </Pressable>
-                           }
-                       />
-                       <Input
-                           icon={<Icon1 name="password" size={26} />}
-                           placeholder='Nhập lại mật khẩu của bạn'
-                           onChangeText={(value: string) => setConfirmPassword(value)}
-                           secureTextEntry={!showConfirmPassword}
-                           value={confirmPassword}
-                           rightIcon={
-                               <Pressable onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
-                                   <Icon3
-                                       name={showConfirmPassword ? "eye-slash" : "eye"}
-                                       size={20}
-                                       color={theme.colors.text}
-                                   />
-                               </Pressable>
-                           }
-                       />
-                       {/*Button*/}
-                       <Button title={'Đăng kí'} loading={loading} onPress={onSubmit}/>
-                   </View>
-                   {/*Footer*/}
-                   <View style={style.footer}>
-                       <Text style={style.footerText}>
-                           Bạn đã có tài khoản? 
-                       </Text>
-                       <Pressable onPress={() => router.push('/login')}>
-                           <Text style={[style.footerText, { color: theme.colors.primaryDark, fontWeight: 600 }]}>
-                               Đăng nhập
-                           </Text> 
-                       </Pressable>
-                   </View>
-               </ScrollView>
-           </KeyboardAvoidingView>
+                    {/*------------------FORM--------------------*/}
+                    <View style={style.form}>
+                        <Text style={{ fontSize: hp(1.5), color: theme.colors.text }}>
+                            Vui lòng điền đầy đủ các thông tin
+                        </Text>
+                        {/*INPUT GMAIL*/}
+                        <Input
+                            icon={<Icon name="mail" size={26} />}
+                            placeholder='Nhập vào email của bạn'
+                            onChangeText={(value: string) => setEmail(value)}
+                            value={email}
+                        />
+                        {/*NAME*/}
+                        <Input
+                            icon={<Icon2 name="user" size={26} />}
+                            placeholder='Nhập vào tên của bạn'
+                            onChangeText={(value: string) => setName(value)}
+                            value={name}
+                        />
+                        {/*INPUT PASSWORD*/}
+                        <Input
+                            icon={<Icon1 name="password" size={26} />}
+                            placeholder="Nhập vào mật khẩu của bạn"
+                            onChangeText={(value: string) => setPassword(value)}
+                            secureTextEntry={!showPassword}
+                            value={password}
+                            rightIcon={
+                                <Icon3
+                                    name={showPassword ? "eye-slash" : "eye"}
+                                    size={20}
+                                    color={theme.colors.text}
+                                />
+                            }
+                            onRightIconPress={() => setShowPassword(!showPassword)}
+                        />
+                        {/*RE INPUT PASSWORD*/}
+                        <Input
+                            icon={<Icon1 name="password" size={26} />}
+                            placeholder='Nhập lại mật khẩu của bạn'
+                            onChangeText={(value: string) => setConfirmPassword(value)}
+                            secureTextEntry={!showConfirmPassword}
+                            value={confirmPassword}
+                            rightIcon={
+                                <Pressable onPress={() => setShowConfirmPassword(!showConfirmPassword)}>
+                                    <Icon3
+                                        name={showConfirmPassword ? "eye-slash" : "eye"}
+                                        size={20}
+                                        color={theme.colors.text}
+                                    />
+                                </Pressable>
+                            }
+                        />
+                        {/* INPUT CHỌN KHOA */}
+                        <TouchableOpacity onPress={() => setModalVisible(true)}>
+                            <Input
+                                icon={<Icon4 name="school-sharp" size={26} />}
+                                placeholder="Chọn Khoa"
+                                value={selectedDepartment}
+                                editable={false}  // Không cho chỉnh sửa trực tiếp
+                            />
+                        </TouchableOpacity>
+                        {/* Modal chọn khoa */}
+                        <Modal
+                            transparent={true}
+                            visible={modalVisible}
+                            animationType="slide"
+                            onRequestClose={() => setModalVisible(false)}
+                        >
+                            <TouchableOpacity
+                                style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}
+                                onPress={() => setModalVisible(false)}  // Đóng modal khi nhấn ngoài
+                            >
+                                <View style={{ backgroundColor: 'white', width: '80%', borderRadius: 10 }}>
+                                    <FlatList
+                                        data={departments}
+                                        renderItem={({ item }) => (
+                                            <TouchableOpacity
+                                                onPress={() => handleSelectDepartment(item.value)} // Chọn khoa
+                                                style={{ padding: 15, borderBottomWidth: 1, borderBottomColor: theme.colors.text }}
+                                            >
+                                                <Text style={{ fontSize: hp(2), color: theme.colors.text }}>
+                                                    {item.label}
+                                                </Text>
+                                            </TouchableOpacity>
+                                        )}
+                                        keyExtractor={(item, index) => index.toString()}
+                                    />
+                                </View>
+                            </TouchableOpacity>
+                        </Modal>
+                        {/*Button*/}
+                        <Button title={'Đăng kí'} loading={loading} onPress={onSubmit} />
+                    </View>
+                    {/*Footer*/}
+                    <View style={style.footer}>
+                        <Text style={style.footerText}>
+                            Bạn đã có tài khoản?
+                        </Text>
+                        <Pressable onPress={() => router.push('/login')}>
+                            <Text style={[style.footerText, { color: theme.colors.primaryDark, fontWeight: 600 }]}>
+                                Đăng nhập
+                            </Text>
+                        </Pressable>
+                    </View>
+                </ScrollView>
+            </KeyboardAvoidingView>
         </ScreenWrapper>
     );
 };
@@ -170,7 +276,7 @@ const style = StyleSheet.create({
     form: {
         gap: 25,
     },
-    forgotPassword:{
+    forgotPassword: {
         textAlign: 'right',
         fontWeight: 600,
         color: theme.colors.text,
@@ -191,4 +297,14 @@ const style = StyleSheet.create({
         fontSize: hp(2),
         color: theme.colors.text,
     },
+    //input chọn khoa 
+    input: {
+        borderWidth: 1,
+        borderColor: theme.colors.text,
+        borderRadius: theme.radius.xl,
+        padding: 10,
+        marginBottom: 15,
+        fontSize: hp(2),
+
+    }
 });

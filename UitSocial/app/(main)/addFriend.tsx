@@ -204,7 +204,7 @@ const AddFriend = () => {
                     rounded={theme.radius.sm}
                 />
                 {/* Name */}
-                <Text style={styles.userName}>{item.name}</Text>
+                    <Text style={styles.userName}>{item.name}</Text>
                 {item.isRequest && item.whoSend !== user.id ? (
                     successRequestId === item.id ? (  // Kiểm tra nếu yêu cầu đã được chấp nhận
                         <Text style={styles.successMessage}>Đã chấp nhận thành công!</Text> // Thông báo thành công
@@ -318,7 +318,7 @@ const AddFriend = () => {
                                     {/*Tên và khoa*/}
                                     <View style={{ alignItems: 'center', gap: 4 }}>
                                         <Text style={styles.userNamePR}>{selectedFriend?.name}</Text>
-                                        <Text style={styles.infoText}>Khoa khoa học và kĩ thuật máy tính</Text>
+                                        <Text style={styles.infoText}>{selectedFriend?.Khoa}</Text>
                                     </View>
                                     {/*Thông tin*/}
                                     <View style={{ gap: 10 }}>
@@ -356,11 +356,7 @@ const AddFriend = () => {
                             )}
                         </View>
                         {/*----------------------------Icon thêm bạn hoặc chấp nhận----------------------------------------- */}
-                        <View>
-                            <Text>Kết bạn</Text>
-                            <Text>Chấp nhận</Text>
-                            <Text>Từ chối</Text>
-                        </View>
+
                         {/*----------------------------Icon thêm bạn hoặc chấp nhận----------------------------------------- */}
                         {/*----------------------Các bài post------------------------------- */}
                         <FlatList
@@ -412,7 +408,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
         marginBottom: hp(2),
         backgroundColor: "#fff",
-        padding: 10,
+        padding: 20,
         borderRadius: theme.radius.sm,
         elevation: 3,
     },
