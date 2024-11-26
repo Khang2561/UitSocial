@@ -130,7 +130,7 @@ const Home = () => {
                     />
                     <Text style={styles.title}>UitSocial</Text>
                     <View style={styles.weatherContainer}>
-                        <Pressable onPress={() => router.push('/weatherUit')}>
+                        <Pressable>
                             <Image
                                 source={{ uri: `https:${weatherIcon}` }}
                                 style={styles.weatherIcon}

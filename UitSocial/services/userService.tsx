@@ -81,10 +81,8 @@ export const getUserFriends = async (userId: string) => {
                 msg: error.message,
             };
         }
-
         // In ra danh sách bạn bè
         console.log("Friends data:", data);
-
         return { success: true, data };
     } catch (error: unknown) {
         if (error instanceof Error) {
@@ -165,7 +163,6 @@ export const sendFriendRequest = async (userId1: string, userId2: string) => {
                 msg: error.message,
             };
         }
-
         return { success: true };
     } catch (error: unknown) {
         if (error instanceof Error) {
@@ -273,7 +270,7 @@ export const acceptFriendRequest = async (userId1: string, userId2: string) => {
     }
 };
 
-
+//Hàm từ chối yêu cầu kết bạn 
 export const rejectFriendRequest = async (userId1: string, userId2: string) => {
     console.log('userId1:', userId1);
     console.log('userId2:', userId2);
@@ -332,6 +329,95 @@ export const rejectFriendRequest = async (userId1: string, userId2: string) => {
     }
 };
 
+//Lấy danh sách bạn bè 
+export const getUserFriendsList = async (userId: string) => {
+    try {
+        const { data, error } = await supabase
+            .from('friends')
+            .select(`
+                user_id1,
+                user_id2,
+                status,
+                users:user_id1 (
+                    id,
+                    name,
+                    image
+                ),
+                friend:user_id2 (
+                    id,
+                    name,
+                    image
+                )
+            `)
+            .or(`user_id1.eq.${userId},user_id2.eq.${userId}`);
+
+        if (error) {
+            return {
+                success: false,
+                msg: error.message,
+            };
+        }
+
+        // Chuyển đổi dữ liệu để chỉ lấy thông tin người bạn
+        const friends = data?.map((friend: any) => {
+            const isCurrentUser = friend.user_id1 === userId;
+            const friendInfo = isCurrentUser ? friend.friend : friend.users;
+
+            return {
+                id: friendInfo.id,
+                name: friendInfo.name, // Đổi từ username thành name
+                avatar_url: friendInfo.image, // Đổi từ avatar_url thành image
+                status: friend.status,
+            };
+        });
+
+        console.log("Processed Friends data:", friends);
+        return { success: true, data: friends };
+    } catch (error: unknown) {
+        if (error instanceof Error) {
+            return {
+                success: false,
+                msg: error.message,
+            };
+        } else {
+            return {
+                success: false,
+                msg: 'Unknown error occurred',
+            };
+        }
+    }
+};
+
+//Điền thông tin khoa 
+export const fillKhoa = async (
+    emailSign: string,
+    khoaSign: string,
+    id: string
+) => {
+    try {
+        const { error } = await supabase
+            .from('users') // Tên bảng
+            .update({
+                email: emailSign,
+                Khoa: khoaSign,
+                image: 'profiles/1726640286388.png', // Đường dẫn ảnh mặc định
+            })
+            .eq('id', id); // Cập nhật theo ID
+
+        if (error) {
+            return {
+                success: false,
+                msg: error.message,
+            };
+        }
+        return { success: true };
+    } catch (err) {
+        return {
+            success: false,
+            msg: 'Lỗi không xác định',
+        };
+    }
+};
 
 
 

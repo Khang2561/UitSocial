@@ -6,7 +6,7 @@ type MessageItemProps = {
         id: string;
         text: string;
         senderId: string;
-        createdAt: string; 
+        created_at: string; 
     };
     currentUser: boolean;
 }
@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
         padding: 12,
         borderRadius: 10,
         marginBottom: 10,
-        maxWidth: '80%',
+        maxWidth: '100%',
     },
     currentUser: {
         backgroundColor: '#DCF8C6', // Light green for current user's messages

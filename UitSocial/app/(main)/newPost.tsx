@@ -6,7 +6,6 @@ import { hp, wp } from '../../helpers/common';
 import { theme } from '../../constants/theme';
 import Avatar from '@/components/Avatar';
 import { useAuth } from '@/contexts/AuthContext';
-import { getSupabaseFileUrl } from '../../services/imageService';
 import RichTextEditor from '@/components/RichTextEditor';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Icon1 from 'react-native-vector-icons/Feather';
@@ -16,11 +15,14 @@ import { Video, ResizeMode } from 'expo-av';
 import { createOrUpdatePost } from '@/services/postService';
 import { RichEditor } from 'react-native-pell-rich-editor';
 
+import { getSupabaseFileUrl, getFileUri, isLocalFile, getFileType } from '../../services/imageService';
+
+
 // Ignore specific warnings
 //LogBox.ignoreLogs(['Toolbar has no editor']);
 
 const NewPost = () => {
-  //-------------------------CONST------------------------------------------------------
+  //-------------------------------------------CONST----------------------------------------------------------------------------
   const post = useLocalSearchParams<any>();
   const { user } = useAuth();
   const bodyRef = useRef<string>('')
@@ -30,14 +32,12 @@ const NewPost = () => {
   const [file, setFile] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const uri = user?.image ? getSupabaseFileUrl(user.image) : null;
   const [isPostUpdated, setIsPostUpdated] = useState(false);
-  //-------------------------Function------------------------------------------------------
-  
 
+  //-------------------------------------------FUNCTION-------------------------------------------------------------------------
   useEffect(() => {
     if (post && post.id && !isPostUpdated) {
       const bodyContent = typeof post.body === 'string' ? post.body : (Array.isArray(post.body) ? post.body.join('') : '');
       bodyRef.current = bodyContent;
-
       if (typeof post.file === 'string') {
         setFile({
           uri: getFileUri(post.file) || '',
@@ -56,57 +56,30 @@ const NewPost = () => {
       setTimeout(() => {
         editorRef.current?.setContentHTML(bodyContent);
       }, 3);
-
       setIsPostUpdated(true);
     }
   }, [post, isPostUpdated]);
 
   //Hàm chọn ảnh và video trong điện thoại 
   const onPick = async (isImage: boolean) => {
+    //INPUT IMAGE
     let mediaConfig: ImagePicker.ImagePickerOptions = {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 3],
       quality: 0.7,
     };
+    //INPUT VIDEO
     if (!isImage) {
       mediaConfig = {
         mediaTypes: ImagePicker.MediaTypeOptions.Videos,
         allowsEditing: true,
       };
     }
-
-    let result = await ImagePicker.launchImageLibraryAsync(mediaConfig);
-
+    let result = await ImagePicker.launchImageLibraryAsync(mediaConfig);//SHOW IN SCREEN
     if (!result.canceled && result.assets.length > 0) {
       setFile(result.assets[0]);
     }
-  };
-
-  //
-  const isLocalFile = (file: any): file is ImagePicker.ImagePickerAsset => {
-    return typeof file === 'object';
-  };
-
-  const getFileType = (file: any) => {
-    if (isLocalFile(file)) {
-      return file.type;
-    }
-
-    if (file.includes('postImages')) {
-      return 'image';
-    }
-
-    return 'video';
-  };
-
-  //lấy link url
-  const getFileUri = (file: ImagePicker.ImagePickerAsset | string | null): string | undefined => {
-    if (!file) return undefined;
-    if (isLocalFile(file)) {
-      return (file as ImagePicker.ImagePickerAsset).uri;//trên điện thoai
-    }
-    return getSupabaseFileUrl(file as string) || undefined;// trên supubase 
   };
 
   //Hàm đăng bài 
@@ -115,7 +88,6 @@ const NewPost = () => {
       Alert.alert('Post', "Vui lòng thêm ảnh hoặc nội dung post");
       return;
     }
-  
     let data: {
       file: ImagePicker.ImagePickerAsset | null;
       body: string;
@@ -126,11 +98,9 @@ const NewPost = () => {
       body: bodyRef.current,
       userId: user?.id,
     };
-  
     if (post.id) {
       data.id = post.id; // TypeScript biết thuộc tính id là hợp lệ
     }
-  
     //create or update post
     setLoading(true);
     const res = await createOrUpdatePost(data);
@@ -141,21 +111,23 @@ const NewPost = () => {
       if (editorRef.current) {
         editorRef.current.setContentHTML('');
       }
-  
       // Điều hướng về trang Home và tải lại trang Home để cập nhật danh sách bài viết
       router.replace('/home'); // Thay thế trang Home để đảm bảo nó được tải lại
     } else {
       Alert.alert('Post', res.msg);
     }
   };
-  
+
 
   //-------------------------Main------------------------------------------------------
   return (
     <ScreenWrapper bg="white">
       <View style={styles.container}>
+      {/*---------------------------------HEADER START-------------------*/}
         <Header title="Tạo bài đăng" />
+      {/*---------------------------------HEADER END-------------------*/}
         <ScrollView contentContainerStyle={{ gap: 20 }}>
+          {/*---------------------------USER INFO START--------------- */}
           <View style={styles.header}>
             <Avatar
               uri={uri}
@@ -169,15 +141,19 @@ const NewPost = () => {
               <Text style={styles.publicText}>public</Text>
             </View>
           </View>
-
+          {/*---------------------------USER INFO END--------------- */}
+          {/*--------------------EDIT TEXT START-------------------*/}
           <View style={styles.textEditor}>
-            {/*bug-----------*/}
+            
             <RichTextEditor
+            
               editorRef={editorRef}
               onChange={(body: string) => (bodyRef.current = body)}
             />
           </View>
+          {/*--------------------EDIT TEXT END-------------------*/}
 
+          {/*--------------------SHOW VIDEO START--------------- */}
           {file && (
             <View style={styles.file}>
               {getFileType(file) === 'video' ? (
@@ -201,7 +177,9 @@ const NewPost = () => {
               </Pressable>
             </View>
           )}
+          {/*--------------------SHOW VIDEO END--------------- */}
 
+          {/*------------------ADD MEDIA START---------------- */}
           <View style={styles.media}>
             <Text style={styles.addImageText}>Thêm bài viết</Text>
             <View style={styles.mediaIcons}>
@@ -213,8 +191,9 @@ const NewPost = () => {
               </TouchableOpacity>
             </View>
           </View>
+          {/*------------------ADD MEDIA END---------------- */}
         </ScrollView>
-
+        {/*--------------------BUTTON POST START------------ */}
         <Button
           buttonStyle={{ height: hp(6.2) }}
           title={post && post.id ? "Cập nhật" : "Post"}
@@ -222,6 +201,7 @@ const NewPost = () => {
           hasShadow={false}
           onPress={onSubmit}
         />
+        {/*--------------------BUTTON POST END------------ */}
       </View>
     </ScreenWrapper>
   );

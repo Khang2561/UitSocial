@@ -1,4 +1,7 @@
 import { supabase } from "@/lib/supabase";
+import { getFilePath } from "./imageService";
+import * as FileSystem from 'expo-file-system'
+import {decode} from 'base64-arraybuffer'
 
 // Type definition for generic API response
 type ApiResponse<T = any> = {
@@ -13,7 +16,7 @@ const handleSupabaseError = (error: any, defaultMessage: string): ApiResponse =>
     msg: error instanceof Error ? error.message : defaultMessage,
 });
 
-// Fetch available users excluding the current user
+// Fetch available users excluding the current user (CHỈ LẤY BẠN BÈ)
 export const getAvailableUsers = async (userId: string): Promise<ApiResponse> => {
     try {
         const { data, error } = await supabase
@@ -70,8 +73,8 @@ export const getRoomId = async (userId1: string, userId2: any): Promise<string> 
     return `${halfUserId1}-${halfUserId2}`;
 }
 
-// Send a message in a chat room
-export const sendMessage = async (userId: string, roomId: string, message: string): Promise<ApiResponse> => {
+// Send a message in a chat room (đã cập nhập thêm hình ảnh vào)
+/*export const sendMessage = async (userId: string, roomId: string, message: string): Promise<ApiResponse> => {
     try {
         const { data, error } = await supabase
             .from('messages')
@@ -88,7 +91,37 @@ export const sendMessage = async (userId: string, roomId: string, message: strin
     } catch (error) {
         return handleSupabaseError(error, "Failed to send message");
     }
-}
+}*/
+
+export const sendMessage = async (
+    userId: string,
+    roomId: string,
+    message: string,
+    fileUrl?: string, // Optional file URL
+  ): Promise<ApiResponse> => {
+    try {
+      const messageData: any = {
+        text: message,
+        senderId: userId,
+        roomId,
+      };
+  
+      if (fileUrl) {
+        messageData.file = fileUrl; // Include file URL if provided
+      }
+  
+      const { data, error } = await supabase
+        .from('messages')
+        .insert([messageData])
+        .select();
+  
+      if (error) throw new Error(`Error sending message: ${error.message}`);
+  
+      return { success: true, data };
+    } catch (error) {
+      return handleSupabaseError(error, "Failed to send message");
+    }
+  };
 
 // Fetch messages from a chat room
 export const fetchMessages = async (
@@ -112,3 +145,83 @@ export const fetchMessages = async (
     }
 };
 
+//LẤY TIN NHẮN MỚI NHẤT VÀ THỜI GIAN 
+export const fetchChatRooms = async (roomId: string) => {
+    try {
+        // Lấy chỉ tin nhắn mới nhất từ phòng chat
+        const { data, error } = await supabase
+            .from('rooms')
+            .select(`roomId, messages (text, created_at)`)
+            .eq('roomId', roomId)
+            .order('created_at', { ascending: true })  // Sắp xếp theo thời gian giảm dần
+            .limit(1);  // Lấy chỉ 1 tin nhắn mới nhất
+
+        // Kiểm tra lỗi nếu có
+        if (error) throw error;
+
+        // Xử lý dữ liệu và trả về kết quả
+        return {
+            success: true,
+            data: data.map(room => ({
+                ...room,
+                latest_message: room.messages?.[0]?.text || 'No messages yet',
+                time: room.messages?.[0]?.created_at || 'N/A'
+            }))
+        };
+    } catch (error) {
+        console.error('Error fetching chat rooms:', error);  // Log chi tiết lỗi
+        return {
+            success: false,
+            message: error instanceof Error ? error.message : "An unknown error occurred"
+        };
+    }
+};
+
+export const fetchLatestMessageTime = async (roomId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('created_at')
+        .eq('roomId', roomId)  // Sửa thành 'roomId' nếu đó là tên đúng
+        .order('created_at', { ascending: false })
+        .limit(1);
+  
+      if (error) {
+        throw error;
+      }
+  
+      return data ? data[0]?.created_at : null;
+    } catch (error) {
+      console.error("Error fetching latest message time:", error);
+      return null;
+    }
+  };
+
+//đưa ảnh và video từ trong phòng chat lên supbase 
+export const uploadChatMedia = async (folderName: string, fileUri: string, isImage = true) => {
+    try {
+      // Đặt tên file và đọc nội dung file dưới dạng base64
+      const fileName = `${folderName}/${Date.now()}-${fileUri.split('/').pop()}`;
+      const fileBase64 = await FileSystem.readAsStringAsync(fileUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      const imageData = decode(fileBase64);
+  
+      // Upload file lên Supabase
+      const { data, error } = await supabase.storage.from("uploads").upload(fileName, imageData, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: isImage ? "image/*" : "video/*",
+      });
+  
+      if (error) {
+        console.log("File upload error: ", error);
+        return { success: false, msg: "Không thể upload media" };
+      }
+  
+      return { success: true, data: data?.path };
+    } catch (error) {
+      console.log("File upload error: ", error);
+      return { success: false, msg: "Không thể upload media" };
+    }
+  };

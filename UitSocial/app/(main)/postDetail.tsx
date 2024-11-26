@@ -146,7 +146,7 @@ const PostDetails = () => {
         let res = await removePost(post.id);
         if (res.success) {
             // Reload lại trang Home trước khi quay về
-            router.replace('/(main)/home');  // Thay vì router.back(), ta sử dụng router.replace
+            router.replace('/(main)/main');  // Thay vì router.back(), ta sử dụng router.replace
         } else {
             Alert.alert('Post', res.msg);
         }
@@ -156,6 +156,7 @@ const PostDetails = () => {
     const onEditPost = async (item:any)=>{
         router.back();
         router.push({pathname:'/(main)/newPost',params:{...item}})
+        console.log("data tra ve : ",item)
     }
 
     //-------------------------Main------------------------------------------------------
