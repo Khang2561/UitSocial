@@ -3,7 +3,9 @@ import { FlatList, FlatListProps, StyleSheet, View, Image, TouchableOpacity, Tex
 import MessageItem from "./MessageItem";
 import Avatar from "./Avatar";
 import { getSupabaseFileUrl } from "@/services/imageService";
-import { Video } from 'expo-av';
+import { Video, Audio } from 'expo-av';
+import AudioPlayer from "@/services/audioService";
+import SoundPlayer from 'react-native-sound-player'
 
 interface Message {
     id: string;
@@ -11,7 +13,7 @@ interface Message {
     senderId: string;
     created_at: string;
     file?: string; // fileUrl đổi thành file
-    fileType?: 'image' | 'video';
+    fileType?: 'image' | 'video' | 'audio';
 }
 
 interface MessageListProps {
@@ -50,28 +52,26 @@ const MessagesList = ({ messages, currentUser, receiver, onLoadPrevMessages }: M
         return dateFormatted;
     };
 
+    //--------------Hàm để dự đoán fileType dựa trên đuôi của URL-------------------------------
+    const getFileType = (url: string) => {
+        const extension = url.split('.').pop()?.toLowerCase();
+        if (extension === 'jpg' || extension === 'jpeg' || extension === 'png') {
+            return 'image';
+        } else if (extension === 'mp4') {
+            return 'video';
+        } else if (extension === 'm4a') {
+            return 'audio'; // Thêm loại file ghi âm
+        }
+        return undefined;
+    };
 
     //-------------------------RENDER RA TIN NHẮN------------------------------------------------- 
     const renderItem: FlatListProps<Message>["renderItem"] = useCallback(
         ({ item, index }: { item: Message; index: number }) => {
             const isReceiver = item.senderId === receiver.id;
             const isCurrentUser = item.senderId === currentUser.id;
-
             // Kiểm tra nếu ngày của tin nhắn thay đổi
             const isNewDay = index === 0 || new Date(messages[index - 1].created_at).toDateString() !== new Date(item.created_at).toDateString();
-
-           
-            //--------------Hàm để dự đoán fileType dựa trên đuôi của URL-------------------------------
-            const getFileType = (url: string) => {
-                const extension = url.split('.').pop()?.toLowerCase(); // Lấy phần mở rộng của file
-                if (extension === 'jpg' || extension === 'jpeg' || extension === 'png') {
-                    return 'image';
-                } else if (extension === 'mp4') {
-                    return 'video';
-                }
-                return undefined; // Nếu không phải ảnh hay video, trả về undefined
-            };
-
             item.fileType = item.file ? getFileType(item.file) : undefined; // Xác định loại file dựa trên URL
             const isMediaOnly = item.fileType === 'image' || item.fileType === 'video'; // Kiểm tra xem có phải chỉ là media không
             const isMessage = item.text === '';
@@ -85,21 +85,25 @@ const MessagesList = ({ messages, currentUser, receiver, onLoadPrevMessages }: M
                     )}
                     <View style={[styles.messageContainer, isCurrentUser ? styles.currentUserMessage : styles.receiverMessage]}>
                         <TouchableOpacity onPress={() => setTimeVisibleMessageId((prevId) => (prevId === item.id ? null : item.id))}>
-                        <View>
-                            {!isMessage && <MessageItem message={item} currentUser={isCurrentUser} />}
-                        </View>
-                        <View>
-                            {item.file && item.fileType === 'image' && (
-                                <Image source={{ uri: String(item.file) }} style={styles.media} />
-                            )}
-                            {item.file && item.fileType === 'video' && (
-                                <Video
-                                    source={{ uri: String(item.file) }}
-                                    style={styles.media}
-                                    useNativeControls
-                                />
-                            )}
-                        </View>
+                            <View>
+                                {!isMessage && <MessageItem message={item} currentUser={isCurrentUser} />}
+                            </View>
+                            <View>
+                                {item.file && item.fileType === 'image' && (
+                                    <Image source={{ uri: String(item.file) }} style={styles.media} />
+                                )}
+                                {item.file && item.fileType === 'video' && (
+                                    <Video
+                                        source={{ uri: String(item.file) }}
+                                        style={styles.media}
+                                        useNativeControls
+                                    />
+                                )}
+                                {item.file && item.fileType === 'audio' && (
+                                    
+                                    <AudioPlayer uri={item.file} />
+                                )}
+                            </View>
                         </TouchableOpacity>
                         {timeVisibleMessageId === item.id && (
                             <Text style={styles.timeText}>{formatTime(item.created_at)} </Text>

@@ -63,17 +63,14 @@ const ChatList: React.FC = () => {
                             ? { ...user, latestMessageTime: updatedMessageTime }
                             : user
                     );
-
                     // Sắp xếp lại danh sách người dùng theo thời gian tin nhắn mới nhất
                     const sortedUsers = updatedUsers.sort((a, b) => 
                         new Date(b.latestMessageTime || 0).getTime() - new Date(a.latestMessageTime || 0).getTime()
                     );
-
                     return sortedUsers;
                 });
             })
             .subscribe();
-
         return () => {
             supabase.removeChannel(messageSubscription);
         };
@@ -104,7 +101,6 @@ const ChatList: React.FC = () => {
                     />
                 </View>
             </View>
-          
             <View>
                 {loading ? (
                     <Loading/>

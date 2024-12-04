@@ -37,7 +37,7 @@ type Post = {
 
 const PostDetails = () => {
     //-------------------------CONST------------------------------------------------------
-    const { postId,commentId } = useLocalSearchParams();
+    const { postId, commentId } = useLocalSearchParams();
     const [post, setPost] = useState<any>(null);
     const { user } = useAuth();
     const router = useRouter();
@@ -46,26 +46,23 @@ const PostDetails = () => {
     const [loading, setLoading] = useState(false);
     const commentRef = useRef<string>('');
 
-    console.log('post detail post id: ',postId)
-    console.log('post detail comment id: ',commentId)
-    
-
     //-------------------------Function------------------------------------------------------
     useEffect(() => {
         let commentChannel = supabase
-        .channel('comments')
-        .on('postgres_changes',{
-            event:'INSERT',
-            schema:'public',
-            table:'comments',
-            filter:'postId=eq.${postId}'
-        },handleNewComment)
-        .subscribe();
+            .channel('comments')
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'comments',
+                filter: 'postId=eq.${postId}'
+            }, handleNewComment)
+            .subscribe();
         getPostDetails();
-        return () =>{
+        return () => {
             supabase.removeChannel(commentChannel);
         }
     }, []);
+
     //reload lại sau khi add comment 
     const handleNewComment = async (payload: any) => {
         if (payload.new) {
@@ -83,6 +80,7 @@ const PostDetails = () => {
             });
         }
     };
+
     //show post details 
     const getPostDetails = async () => {
         let res = await fetchPostDetails(postId);
@@ -91,6 +89,7 @@ const PostDetails = () => {
         }
         setStartLoading(false);
     };
+
     //add new comment 
     const onNewComment = async () => {
         if (!commentRef.current) return null;//nếu chưa nhập vào công ty nào thì trả về null 
@@ -104,15 +103,15 @@ const PostDetails = () => {
         setLoading(false);
         if (res.success) {
             //gửi thông báo tới chủ post 
-            if(user.id!=post.userId){
+            if (user.id != post.userId) {
                 //send notification 
                 let notify = {
                     senderId: user.id,
-                    receiverId:post.userId,
-                    title:'commented on your post',
+                    receiverId: post.userId,
+                    title: 'commented on your post',
                     data: JSON.stringify({
                         postId: post.id,
-                        commentId:res?.data?.id
+                        commentId: res?.data?.id
                     })
                 }
                 createNotification(notify);//truyền lên data
@@ -125,6 +124,7 @@ const PostDetails = () => {
             Alert.alert('Comment', res.msg);
         }
     };
+
     //delete comment 
     const onDeleteComment = async (comment: Comment) => {
         let res = await removeComment(comment.id);
@@ -140,6 +140,7 @@ const PostDetails = () => {
             Alert.alert('Comment : ', res.msg);
         }
     };
+
     //delete post 
     const onDeletePost = async (item: any) => {
         // Xóa bài post
@@ -151,12 +152,12 @@ const PostDetails = () => {
             Alert.alert('Post', res.msg);
         }
     };
-    
+
     //edit post 
-    const onEditPost = async (item:any)=>{
+    const onEditPost = async (item: any) => {
         router.back();
-        router.push({pathname:'/(main)/newPost',params:{...item}})
-        console.log("data tra ve : ",item)
+        router.push({ pathname: '/(main)/newPost', params: { ...item } })
+        console.log("data tra ve : ", item)
     }
 
     //-------------------------Main------------------------------------------------------
@@ -167,7 +168,6 @@ const PostDetails = () => {
             </View>
         );
     }
-
     if (!post) {
         return (
             <View style={[styles.center, { justifyContent: 'flex-start', marginTop: 100 }]}>
@@ -175,7 +175,6 @@ const PostDetails = () => {
             </View>
         );
     }
-
     return (
         <View style={styles.container}>
             <Header title="Profile"></Header>

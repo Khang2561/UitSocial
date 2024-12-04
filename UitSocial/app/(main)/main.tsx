@@ -34,11 +34,11 @@ const Main = () => {
                 useNativeDriver: true,
             }).start();
         });
-
         return () => {
             scrollY.removeListener(listenerId);
         };
     }, [scrollY]);
+
     // hight light for selected icon
     const tabBarIconColor = (routeName: string) => {
         return activeScreen === routeName ? 'blue' : 'black';
@@ -47,7 +47,6 @@ const Main = () => {
     const getAvatarStyle = (routeName: string) => {
         return activeScreen === routeName ? { borderColor: 'blue', borderWidth: 2 } : { borderColor: 'transparent' };
     };
-
     //-------------------------------MAIN-----------------------------------------------
     return (
         <ScreenWrapper bg="white">

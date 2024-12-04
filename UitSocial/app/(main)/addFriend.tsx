@@ -54,12 +54,7 @@ const AddFriend = () => {
         setLoadingRequests(true);
         try {
             const result = await fetchFriendRequests(user.id);
-            // Log kết quả trả về từ API
-            console.log("Result from fetchFriendRequests:", result);
-
             if (result.success) {
-                // Log dữ liệu yêu cầu kết bạn
-                console.log("Friend requests data:", result.data);
                 setFriendRequests(result.data || []);
             }
             else {
@@ -91,7 +86,6 @@ const AddFriend = () => {
             setLoading(false);
         }
     };
-
 
     //gửi lời mời kết bạn 
     const handleAddFriend = async (friendId: string) => {
@@ -136,6 +130,7 @@ const AddFriend = () => {
         setIsModalVisible(false);
         setSelectedFriend(null);
     };
+
     //gôm add friend và request lại 
     const getCombinedUsers = () => {
         const friendRequestsWithFlag = friendRequests.map(req => ({
@@ -257,7 +252,6 @@ const AddFriend = () => {
             setHasMore(false);
         }
     };
-
 
     //-------------------------------------------------------MAIN-----------------------------------------------------------
     return (

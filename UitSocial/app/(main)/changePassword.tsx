@@ -35,43 +35,35 @@ export default function ChangePassword() {
             alert('Mật khẩu mới không khớp. Vui lòng thử lại!');
             return;
         }
-    
         if (!currentPassword || !newPassword || !confirmPassword) {
             alert('Vui lòng nhập đầy đủ thông tin!');
             return;
         }
-    
         if (!isValidPassword(newPassword)) {
             alert('Mật khẩu mới phải có ít nhất 10 ký tự, bao gồm chữ hoa, chữ thường và số!');
             return;
         }
-    
         try {
             setLoading(true);
-    
             // Thực hiện xác minh mật khẩu cũ với Supabase (nếu cần thiết)
             const { error: currentPasswordError } = await supabase.auth.signInWithPassword({
                 email: user.email,  // Dùng email của người dùng hiện tại
                 password: currentPassword,  // Mật khẩu cũ để xác minh
             });
-    
             if (currentPasswordError) {
                 alert('Mật khẩu hiện tại không đúng. Vui lòng thử lại!');
                 setLoading(false);
                 return;
             }
-    
             // Nếu mật khẩu cũ đúng, tiến hành cập nhật mật khẩu mới
             const { error } = await supabase.auth.updateUser({
                 password: newPassword,  // Mật khẩu mới
             });
-    
             if (error) {
                 alert('Có lỗi xảy ra khi thay đổi mật khẩu: ' + error.message);
                 setLoading(false);
                 return;
             }
-    
             alert('Đổi mật khẩu thành công!');
             setLoading(false);
         } catch (error) {
@@ -139,7 +131,6 @@ export default function ChangePassword() {
                         />
                     }
                 />
-
                 {/* Nút xác nhận */}
                 <TouchableOpacity style={styles.button} onPress={handleChangePassword} disabled={loading}>
                     <Text style={styles.buttonText}>{loading ? 'Đang xử lý...' : 'Xác nhận'}</Text>

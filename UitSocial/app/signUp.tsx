@@ -29,7 +29,6 @@ const SignUp = () => {
     const [selectedDepartment, setSelectedDepartment] = useState(""); //chọn khoa
     const [modalVisible, setModalVisible] = useState(false); // Hiển thị modal
     //------------------------------------FUNCTION------------------------------------------------------
-
     const departments = [
         { label: "Khoa Khoa học máy tính", value: "Khoa Khoa học máy tính" },
         { label: "Khoa Công nghệ phần mềm", value: "Khoa Công nghệ phần mềm" },
@@ -39,6 +38,7 @@ const SignUp = () => {
         { label: "Khoa Khoa học và Kỹ thuật Thông tin", value: "Khoa Khoa học và Kỹ thuật Thông tin" },
     ];
 
+    //Hàm chọn 
     const handleSelectDepartment = (department: string) => {
         setSelectedDepartment(department);
         setModalVisible(false); // Đóng modal sau khi chọn khoa
@@ -63,19 +63,16 @@ const SignUp = () => {
             Alert.alert('Đăng kí', "Bạn phải điền đầy đủ thông tin");
             return;
         }
-
         //--------------Kiểm tra định dạng email----------------------
         if (!isValidEmail(email)) {
             Alert.alert('Đăng kí', "Email phải có định dạng MSSV@gm.uit.edu.vn");
             return;
         }
-
         //----------------Kiểm tra mật khẩu----------------------------
         if (!isValidPassword(password)) {
             Alert.alert('Đăng kí', "Mật khẩu phải có ít nhất 10 ký tự, bao gồm chữ hoa, chữ thường và số");
             return;
         }
-
         //--------Nếu nhập 2 password không khớp nhau---------------- 
         if (password !== confirmPassword) {
             Alert.alert('Đăng kí', "Mật khẩu không khớp");
@@ -86,13 +83,11 @@ const SignUp = () => {
             Alert.alert("Đăng kí", "Bạn phải chọn khoa");
             return;
         }
-
         //---------------Lấy thông tin start-------------------------------
         let emailSign = email.trim();
         let nameSign = name.trim();
         let passwordSign = password.trim();
         let khoaSign = selectedDepartment.trim();
-
         // HỦY LOADING
         setLoading(false);
 
@@ -106,13 +101,11 @@ const SignUp = () => {
                 },
             },
         });
-
         // Xử lý lỗi trong quá trình đăng ký
         if (signUpError) {
             Alert.alert('Sign up', signUpError.message);
             return;
         }
-
         // Nếu đăng ký thành công, tiếp tục cập nhật thông tin người dùng
         if (user) {
             const id = user.id; // Lấy ID của người dùng từ kết quả đăng ký
@@ -125,7 +118,6 @@ const SignUp = () => {
                 Alert.alert('Đăng ký', `Cập nhật thông tin thất bại: ${updateResult.msg}`);
             }
         }
-       
         //---------------Lấy thông tin end-------------------------------
     };
 
