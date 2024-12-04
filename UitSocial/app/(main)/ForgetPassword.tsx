@@ -24,9 +24,7 @@ export default function ForgetPassword() {
       Alert.alert("Lỗi", "Vui lòng nhập email.");
       return;
     }
-  
     const otp = generateOtp(); // Tạo OTP 6 chữ số
-  
     try {
       const response = await fetch("http://localhost:3000/send-email", {
         method: "POST",
@@ -37,7 +35,6 @@ export default function ForgetPassword() {
           text: `Mã OTP của bạn là: ${otp}`,
         }),
       });
-  
       if (response.ok) {
         setGeneratedOtp(otp); // Cập nhật OTP được gửi đi
         Alert.alert("Thành công", "Mã OTP đã được gửi đến email của bạn.");
@@ -87,7 +84,6 @@ export default function ForgetPassword() {
   return (
     <ScreenWrapper>
       <View style={styles.container}>
-
         {/*--------------------------Nhập vào email------------------------------ */}
         {step === 1 && (
           <>

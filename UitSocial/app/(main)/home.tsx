@@ -15,7 +15,6 @@ import Loading from "@/components/Loading";
 import { supabase } from "@/lib/supabase";
 import { getUserData } from "@/services/userService";
 import axios from 'axios';
-
 LogBox.ignoreLogs(['Warning: TNodeChildrenRenderer', 'Warning: MemoizedTNodeRenderer', 'Warning: TRenderEngineProvider']);
 
 const Home = () => {
@@ -36,14 +35,11 @@ const Home = () => {
             .channel('posts')
             .on('postgres_changes', { event: '*', schema: 'public', table: 'post' }, handlePostEvent)
             .subscribe();
-
         fetchWeather(); // Hàm lấy thời tiết 
-
         const notificationChannel = supabase
             .channel('notifications')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `receiverId=eq.${user.id}` }, handleNewNotifications)
             .subscribe();
-
         return () => {
             supabase.removeChannel(postChannel);
             supabase.removeChannel(notificationChannel);
@@ -58,11 +54,11 @@ const Home = () => {
                 useNativeDriver: true,
             }).start();
         });
-
         return () => {
             scrollY.removeListener(listenerId);
         };
     }, [scrollY, translateY]);
+
     //THông báo nếu có comment mới vào bài viết của mình 
     const handleNewNotifications = async (payload: any) => {
         console.log('got new notifications: ', payload);
@@ -70,6 +66,7 @@ const Home = () => {
             setNotificationCount(prev => prev + 1);
         }
     };
+
     //Khi chạm vào bài viết 
     const handlePostEvent = async (payload: any) => {
         if (payload.event === 'INSERT' && payload.new.id) {
@@ -86,6 +83,7 @@ const Home = () => {
             getPosts();
         }
     };
+
     //Lấy các bài post 
     const getPosts = async () => {
         if (!hasMore) return;
@@ -98,6 +96,7 @@ const Home = () => {
             setPosts([]);
         }
     };
+    
     //api lấy thông tin thời tiết 
     const fetchWeather = async () => {
         try {

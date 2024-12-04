@@ -10,7 +10,6 @@ import NotificationItem from '@/components/NotificationItem'
 import Header from '@/components/Header'
 
 const Notifications = () => {
-    
     //-------------------------CONST------------------------------------------------------
     const [notifications, setNotifications] = useState<any[]>([]);
     const {user} = useAuth();

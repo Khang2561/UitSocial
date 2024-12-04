@@ -1,9 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-
 import { theme } from '@/constants/theme';
 import { hp, wp } from '@/helpers/common';
-
 import { useRoute } from '@react-navigation/native';
 import { RouteProp } from '@react-navigation/native';
 

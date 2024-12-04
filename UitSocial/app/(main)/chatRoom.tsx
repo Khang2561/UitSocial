@@ -11,14 +11,17 @@ import {
   sendMessage,
   fetchMessages,
   uploadChatMedia,
+  uploadAudio,
 } from "@/services/chatService";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { View, StyleSheet, KeyboardAvoidingView, Platform, Image, TouchableOpacity } from "react-native";
+import { View, StyleSheet, KeyboardAvoidingView, PermissionsAndroid, Platform, Image, TouchableOpacity, Text } from "react-native";
 import { Icon } from "react-native-elements";
+import Icon1 from 'react-native-vector-icons/MaterialIcons';
 import * as ImagePicker from 'expo-image-picker';
-import { Camera } from 'expo-camera';
 import { useRef } from "react";
+import AudioRecorderPlayer from 'react-native-audio-recorder-player'
+import { Audio} from "expo-av";
 
 const ChatRoom = () => {
   //----------------------------------------------------------------------CONST------------------------------------------
@@ -27,29 +30,24 @@ const ChatRoom = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [text, setText] = useState("");
   const [loadingPrevMessages, setLoadingPrevMessages] = useState(false);
-
   //hiển thị file ảnh đã chọn 
   const [file, setFile] = useState<ImagePicker.ImagePickerAsset | null>(null);//save image and video 
+  //lưu âm thanh 
+  const [isRecording, setIsRecording] = useState(false);
+  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [audioPermission, setAudioPermission] = useState<boolean | null>(null);
+  const [recordedAudio, setRecordedAudio] = useState<any>(null);
+  const [recordingStatus, setRecordingStatus] = useState("idle");
 
-  //hàm điểm khiển camera 
-  const [hasPermission, setHasPermission] = useState<boolean | null>(null); //cấp quyền truy cập vào camera 
-  const [camera, setCamera] = useState<typeof Camera | null>(null);
-  const [photo, setPhoto] = useState<ImagePicker.ImagePickerAsset | null>(null);
-  const [isCameraVisible, setIsCameraVisible] = useState(false);//điều kiển việc hiển thị camera 
-  const cameraRef = useRef<typeof Camera | null>(null);
   //--------------------------------------------------------------------FUNCTION-----------------------------------------
   //------------------------LOAD MESS REAL TIME---------------
   useEffect(() => {
     const loadMessages = async () => {
-      // Create chat room if it doesn't exist
-      await createChatRoom(user.id, item.id);
-      // Fetch the roomId after ensuring the chat room is created
-      const roomId = await getRoomId(user.id, item.id);
-      // Fetch existing messages from the room
-      const result = await fetchMessages(roomId);
+      await createChatRoom(user.id, item.id);// Create chat room if it doesn't exist
+      const roomId = await getRoomId(user.id, item.id);// Fetch the roomId after ensuring the chat room is created
+      const result = await fetchMessages(roomId);// Fetch existing messages from the room
       if (result.success) setMessages(result.data || []);
-      // Set up the real-time subscription after roomId is available
-      const subscription = supabase
+      const subscription = supabase// Set up the real-time subscription after roomId is available
         .channel(`messages-room-${roomId}`)
         .on(
           "postgres_changes",
@@ -76,28 +74,60 @@ const ChatRoom = () => {
     loadMessages();
   }, [item.id, user.id]); // This effect will run whenever item.id or user.id changes
 
+  //cấp quyền nếu thiết bị chưa được cấp quyền trước đó 
+  useEffect(() => {
+    async function getPermission() {
+      try {
+        const permission = await Audio.requestPermissionsAsync();
+        console.log("Permission Granted: " + permission.granted);
+        setAudioPermission(permission.granted);
+      } catch (error) {
+        console.error("Error requesting permission:", error);
+      }
+    }
+    getPermission();
+    return () => {
+      if (recording) {
+        stopRecording();
+      }
+    };
+  }, []);
+
   //---------------------------SEND EVENT-----------------------------------
   const handleSendMessage = async () => {
     const messageText = text.trim();
     const roomId = await getRoomId(user.id, item.id);
-    // Nếu không có tin nhắn và file thì không gửi
-    if (!messageText && !file) return;
+  
+    if (!messageText && !file && !recordedAudio) return; // Nếu không có tin nhắn, file ảnh/video, hoặc file âm thanh thì không gửi
+  
     setText(""); // Clear input immediately
     setFile(null); // Xóa file sau khi gửi
+  
+    let fileUrl = "";
+  
     try {
-      let fileUrl: string = ""; // Default to an empty string if no file URL is provided
-      // Nếu có file, tải lên Supabase và lấy URL
+      // Nếu có file ảnh/video, tải lên Supabase và lấy URL
       if (file) {
         const uploadResult = await uploadChatMedia(`chat-media`, file.uri, file.type?.includes('image') ?? true);
         if (uploadResult.success && uploadResult.data) {
-          // Lấy URL công khai từ đường dẫn của file
           const { data: urlData } = supabase.storage.from("uploads").getPublicUrl(uploadResult.data);
-          fileUrl = urlData.publicUrl; // Ensure fileUrl is always a string
+          fileUrl = urlData.publicUrl; // Lấy URL file ảnh/video
         } else {
           console.error("Error uploading file:", uploadResult.msg);
         }
       }
-      // Gửi tin nhắn với URL của file (nếu có)
+  
+      // Nếu có file âm thanh, tải lên Supabase và lấy URL
+      if (recordedAudio) {
+        const uploadResult = await uploadAudio(`chat-media`, recordedAudio.uri);
+        if (uploadResult.success && uploadResult.data) {
+          fileUrl = uploadResult.data; // Lấy URL file âm thanh
+        } else {
+          console.error("Error uploading audio:", uploadResult.msg);
+        }
+      }
+  
+      // Gửi tin nhắn với URL của file ảnh/video hoặc âm thanh (nếu có)
       const result = await sendMessage(user.id, roomId, messageText, fileUrl);
       if (result.success && result.data) {
         setMessages((prevMessages) =>
@@ -111,7 +141,6 @@ const ChatRoom = () => {
     } catch (error) {
       console.error("Error sending message:", error);
     }
-    console.error("Đã hoàn thành đưa file ảnh lên ");
   };
 
   //------------------------------------LOAD PREV MESSAGES---------------------------------
@@ -147,6 +176,62 @@ const ChatRoom = () => {
       setFile(result.assets[0]);
     }
   };
+  //-------------------------------------Sự kiên khi bấm ghi âm --------------------------------
+  async function handleRecordButtonPress() {
+    if (recording) {
+      const audioUri = await stopRecording();
+      if (audioUri) {
+        console.log("Saved audio file to", audioUri);
+      }
+    } else {
+      await startRecording();
+    }
+  }
+
+  // Bắt đầu ghi âm
+  async function startRecording() {
+    setIsRecording(true);
+    if (isRecording || !audioPermission) {
+      console.warn("Recording not allowed or already in progress");
+      return;
+    }
+    try {
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
+      const newRecording = new Audio.Recording();
+      await newRecording.prepareToRecordAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+      await newRecording.startAsync();
+      setRecording(newRecording);
+      setRecordingStatus("recording");
+    } catch (error) {
+      console.error("Failed to start recording", error);
+    }
+  }
+
+  // Dừng ghi âm
+  async function stopRecording() {
+    setIsRecording(false);
+    try {
+      if (recordingStatus === "recording" && recording) {
+        await recording.stopAndUnloadAsync();
+        const uri = recording.getURI();
+        setRecordedAudio({
+          uri,
+          name: `recording-${Date.now()}.m4a`,
+          type: "audio/m4a",
+        });
+        setRecording(null);
+        setRecordingStatus("stopped");
+        return uri;
+      }
+    } catch (error) {
+      console.error("Failed to stop recording", error);
+    }
+  }
 
   //---------------------------------Sử lý sự kiện khi bấm nút máy ảnh------------
   //----------------------------------------MAIN----------------------------------------------------------
@@ -167,7 +252,7 @@ const ChatRoom = () => {
           </View>
           {/*--------MessagesInput--------- */}
           <View style={styles.inputWrapper}>
-            <Icon name="camera-alt" size={24} color={theme.colors.text} onPress={() => { /* Handle camera action */ }} />
+            <Icon name="settings-voice" size={24} color={theme.colors.text} onPress={handleRecordButtonPress} />
             <Icon name="image" size={24} color={theme.colors.text} onPress={() => selectMedia()} containerStyle={{ marginLeft: 10 }} />
 
             {/* Hiển thị file đã chọn trong ô nhập chat */}
@@ -180,7 +265,6 @@ const ChatRoom = () => {
                 )}
               </View>
             )}
-
             <Input
               placeholder="Aa"
               value={text}
@@ -229,7 +313,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 5,
-  }
+  },
 });
 
 export default ChatRoom;

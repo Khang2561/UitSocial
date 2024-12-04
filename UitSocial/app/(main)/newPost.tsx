@@ -144,9 +144,7 @@ const NewPost = () => {
           {/*---------------------------USER INFO END--------------- */}
           {/*--------------------EDIT TEXT START-------------------*/}
           <View style={styles.textEditor}>
-            
             <RichTextEditor
-            
               editorRef={editorRef}
               onChange={(body: string) => (bodyRef.current = body)}
             />

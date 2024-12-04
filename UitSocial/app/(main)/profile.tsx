@@ -39,9 +39,7 @@ const Profile = () => {
   const [hasMore, setHasMore] = useState(true);
   const [scrollY] = useState(new Animated.Value(0));
   const [translateY, setTranslateY] = useState(new Animated.Value(0));
-
   const [isModalVisible, setIsModalVisible] = useState(false);
-
   const [friends, setFriends] = useState<any[]>([]);
 
   //-------------------------------------------------------------FUNCTION------------------------------------------------------
@@ -134,12 +132,10 @@ const Profile = () => {
           <TouchableOpacity style={styles.settingButton} onPress={settingPage}>
             <Icon name="setting" color={theme.colors.dark} size={20} />
           </TouchableOpacity>
-
           {/*Logout*/}
           <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
             <Icon1 name="logout" color={theme.colors.rose} size={20} />
           </TouchableOpacity>
-          
         </Header>
         {/*main*/}
         <View style={styles.container}>

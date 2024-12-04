@@ -21,7 +21,6 @@ const Login = () => {
     const [showPassword, setShowPassword] = useState(false);
 
     //-------------------------Function------------------------------------------------------
-    
     //SỰ KIỆN NÚT BẤM 
     const onSubmit = async () => {
         if (!email || !password) {
@@ -40,7 +39,6 @@ const Login = () => {
         if (error) {
             Alert.alert('Login', error.message);
         }
-
     }
 
     //-------------------------Main------------------------------------------------------
@@ -109,9 +107,7 @@ const Login = () => {
         </ScreenWrapper>
     );
 }
-
 export default Login;
-
 //-------------------------CSS------------------------------------------------------
 const style = StyleSheet.create({
     container: {
