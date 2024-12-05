@@ -262,6 +262,7 @@ const PostCard = (props: {
               tagsStyles={tagsStyles}
             />
           )}
+          <Text style={style.boldText}>@{item.Catagory}</Text>
         </View>
         {/*show images post*/}
         {item?.file && item?.file.includes('postImages') && (
@@ -533,6 +534,9 @@ const style = StyleSheet.create({
     borderTopColor: '#eaeaea',
   },
   //-------------------------------------------------
+  boldText: {
+    fontWeight: "bold", // Làm chữ in đậm
+  },
 });
 
 const shadowStyles = {
