@@ -104,7 +104,7 @@ const Profile = () => {
 
   //-------------------Setting page----------------------
   const settingPage = async () =>{
-    router.push('/(main)/changePassword')
+    router.push('/(main)/settingMenu')
   }
 
   //------------hàm lấy api của bài post---------------------- 
