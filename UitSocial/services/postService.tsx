@@ -31,6 +31,10 @@ export const createOrUpdatePost = async (post: any): Promise<CreateOrUpdatePostR
                 return { success: false, msg: fileResult.msg || 'Unknown error' }; // Handle potential missing msg
             }
         }
+        // Ensure post includes category
+        if (!post.Catagory || typeof post.Catagory !== 'string') {
+            return { success: false, msg: 'Category is required and must be a string' };
+        }
 
         const { data, error } = await supabase
             .from('posts')

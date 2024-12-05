@@ -1,4 +1,4 @@
-import { Alert, StyleSheet, Text, View, Image, Pressable, FlatList, LogBox, Animated } from "react-native";
+import { Alert, StyleSheet, Text, View, Image, Pressable, FlatList, LogBox, Animated, ScrollView } from "react-native";
 import React, { useEffect, useState } from "react";
 import ScreenWrapper from "../../components/ScreenWrapprer";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,7 +7,6 @@ import { hp, wp } from '../../helpers/common';
 import Icon from 'react-native-vector-icons/EvilIcons';
 import Icon1 from 'react-native-vector-icons/Feather';
 import { useRouter } from "expo-router";
-import Avatar from "@/components/Avatar";
 import { getSupabaseFileUrl } from '../../services/imageService';
 import { fetchPosts } from "@/services/postService";
 import PostCard from '../../components/PostCard';
@@ -28,6 +27,9 @@ const Home = () => {
     const [notificationCount, setNotificationCount] = useState(0);//thông báo comment mới 
     const [scrollY] = useState(new Animated.Value(0));
     const [translateY] = useState(new Animated.Value(0));
+
+    const [allPosts, setAllPosts] = useState<any[]>([]); // Lưu danh sách bài viết gốc
+
 
     //-------------------------Function------------------------------------------------------
     useEffect(() => {
@@ -59,6 +61,14 @@ const Home = () => {
         };
     }, [scrollY, translateY]);
 
+    useEffect(() => {
+        if (selectedCategory === 'All') {
+            setPosts(allPosts);
+        } else {
+            filterPosts(selectedCategory);
+        }
+    }, [allPosts]); // Chỉ chạy lại khi danh sách gốc thay đổi
+
     //THông báo nếu có comment mới vào bài viết của mình 
     const handleNewNotifications = async (payload: any) => {
         console.log('got new notifications: ', payload);
@@ -75,28 +85,35 @@ const Home = () => {
             newPost.postLikes = [];
             newPost.comments = [{ count: 0 }];
             newPost.user = res.success ? res.data : {};
-            setPosts(prevPosts => [newPost, ...prevPosts]);
+            setAllPosts(prevPosts => [newPost, ...prevPosts]); // Cập nhật danh sách gốc
+            if (selectedCategory === 'All') {
+                setPosts(prevPosts => [newPost, ...prevPosts]);
+            }
         }
         if (payload.event === 'DELETE' && payload.old.id) {
+            setAllPosts(prevPosts => prevPosts.filter(post => post.id !== payload.old.id));
             setPosts(prevPosts => prevPosts.filter(post => post.id !== payload.old.id));
-            // Gọi lại hàm lấy dữ liệu sau khi xóa
-            getPosts();
         }
     };
+    
 
     //Lấy các bài post 
     const getPosts = async () => {
         if (!hasMore) return;
-        let limit = posts.length + 7;
-        const res = await fetchPosts(limit, null);  // Truyền giá trị limit vào hàm fetchPosts
+        let limit = allPosts.length + 7;
+        const res = await fetchPosts(limit, null); // Truyền giá trị limit vào hàm fetchPosts
         if (res.success && res.data) {
-            if (posts.length === res.data.length) setHasMore(false);
-            setPosts(res.data);
+            if (allPosts.length === res.data.length) setHasMore(false);
+            setAllPosts(res.data); // Cập nhật danh sách gốc
+            if (selectedCategory === 'All') {
+                setPosts(res.data); // Chỉ cập nhật nếu đang hiển thị tất cả
+            }
         } else {
-            setPosts([]);
+            setAllPosts([]);
         }
     };
     
+
     //api lấy thông tin thời tiết 
     const fetchWeather = async () => {
         try {
@@ -114,6 +131,31 @@ const Home = () => {
             setWeatherIcon(weatherData.current.condition.icon); // Biểu tượng thời tiết
         } catch (error) {
             console.error('Error fetching weather data:', error);
+        }
+    };
+    //------------------------------Catagory------------------------------------------------------------
+    const categories = [
+        { id: 1, name: 'Thịnh hành' },
+        { id: 2, name: 'Góc thắc mắc học tập' },
+        { id: 3, name: 'Fix bug' },
+        { id: 4, name: 'Đời sống UIT' },
+        { id: 5, name: 'Tuyển dụng' },
+    ];
+
+    const [selectedCategory, setSelectedCategory] = useState('All');
+
+    const filterPosts = (category: string) => {
+        setSelectedCategory(category);
+        if (category === 'Thịnh hành') {
+            const sortedPosts = [...allPosts].sort((a, b) => b.postLikes.length - a.postLikes.length);
+            setPosts(sortedPosts);
+        } else if (category === 'All') {
+            setPosts(allPosts); // Hiển thị tất cả bài viết
+        } else {
+            const filteredPosts = allPosts
+                .filter(post => post.Catagory === category)
+                .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+            setPosts(filteredPosts);
         }
     };
 
@@ -154,6 +196,34 @@ const Home = () => {
                 </View>
                 {/*********************Header end*********************/}
 
+                {/*Catagory post start*/}
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.categoryBar}
+                >
+                    {categories.map((category) => (
+                        <Pressable
+                        key={category.id}
+                        style={[
+                            styles.categoryItem,
+                            selectedCategory === category.name && styles.activeCategory,
+                        ]}
+                        onPress={() => filterPosts(category.name)} // Gọi hàm lọc khi nhấn vào danh mục
+                    >
+                        <Text
+                            style={[
+                                styles.categoryText,
+                                selectedCategory === category.name && styles.activeCategoryText,
+                            ]}
+                        >
+                            {category.name}
+                        </Text>
+                    </Pressable>
+                    ))}
+                </ScrollView>
+                {/*Catagory post end*/}
+
                 {/*********************Show post*********************/}
                 <FlatList
                     data={posts}
@@ -182,6 +252,7 @@ const Home = () => {
                         </View>
                     )}
                 />
+                {/*********************Show post*********************/}
             </View>
         </ScreenWrapper>
     );
@@ -218,8 +289,8 @@ const styles = StyleSheet.create({
         gap: 18,
     },
     listStyle: {
-        paddingTop: 20,
         paddingHorizontal: wp(4),
+        marginTop: 10
     },
     noPosts: {
         fontSize: hp(2),
@@ -252,4 +323,28 @@ const styles = StyleSheet.create({
         height: 30,
         marginRight: 5,
     },
+    //---------------------------------------
+    categoryBar: {
+        paddingHorizontal: wp(5),
+    },
+    categoryItem: {
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderRadius: 20,
+        marginRight: 10,
+    },
+    activeCategory: {
+        backgroundColor: theme.colors.primary,
+        
+    },
+    categoryText: {
+        fontSize: hp(2),
+        color: theme.colors.text,
+    },
+    activeCategoryText: {
+        color: 'white',
+    }
 });
+
+
+
