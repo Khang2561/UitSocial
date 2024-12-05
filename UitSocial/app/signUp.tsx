@@ -30,12 +30,12 @@ const SignUp = () => {
     const [modalVisible, setModalVisible] = useState(false); // Hiển thị modal
     //------------------------------------FUNCTION------------------------------------------------------
     const departments = [
-        { label: "Khoa Khoa học máy tính", value: "Khoa Khoa học máy tính" },
-        { label: "Khoa Công nghệ phần mềm", value: "Khoa Công nghệ phần mềm" },
-        { label: "Khoa Kỹ thuật máy tính", value: "Khoa Kỹ thuật máy tính" },
-        { label: "Khoa Hệ thống thông tin", value: "Khoa Hệ thống thông tin" },
-        { label: "Khoa Mạng máy tính và truyền thông", value: "Khoa Mạng máy tính và truyền thông" },
-        { label: "Khoa Khoa học và Kỹ thuật Thông tin", value: "Khoa Khoa học và Kỹ thuật Thông tin" },
+        { label: "Khoa học máy tính", value: "Khoa học máy tính" },
+        { label: "Công nghệ phần mềm", value: "Công nghệ phần mềm" },
+        { label: "Kỹ thuật máy tính", value: "Kỹ thuật máy tính" },
+        { label: "Hệ thống thông tin", value: "Hệ thống thông tin" },
+        { label: "Mạng máy tính và truyền thông", value: "Mạng máy tính và truyền thông" },
+        { label: "Khoa học và Kỹ thuật Thông tin", value: "Khoa học và Kỹ thuật Thông tin" },
     ];
 
     //Hàm chọn 
