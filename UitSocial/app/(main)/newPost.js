@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Image, Pressable, Alert, LogBox } from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View, Image, Pressable, Alert } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
 import ScreenWrapper from '../../components/ScreenWrapprer';
 import Header from '@/components/Header';
@@ -14,34 +14,28 @@ import * as ImagePicker from 'expo-image-picker';
 import { Video, ResizeMode } from 'expo-av';
 import { createOrUpdatePost } from '@/services/postService';
 import { RichEditor } from 'react-native-pell-rich-editor';
-
 import { getSupabaseFileUrl, getFileUri, isLocalFile, getFileType } from '../../services/imageService';
 
-
-// Ignore specific warnings
-//LogBox.ignoreLogs(['Toolbar has no editor']);
-
 const NewPost = () => {
-  //-------------------------------------------CONST----------------------------------------------------------------------------
-  const post = useLocalSearchParams<any>();
+  const post = useLocalSearchParams();
   const { user } = useAuth();
-  const bodyRef = useRef<string>('')
-  const editorRef = useRef<RichEditor>(null);
+  const bodyRef = useRef('');
+  const editorRef = useRef(null);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [file, setFile] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [file, setFile] = useState(null);
   const uri = user?.image ? getSupabaseFileUrl(user.image) : null;
   const [isPostUpdated, setIsPostUpdated] = useState(false);
-  const [Catagory, setCatagory] = useState('');//dán nhãn cho bài post
-  //-------------------------------------------FUNCTION-------------------------------------------------------------------------
+  const [Catagory, setCatagory] = useState('');
+
   useEffect(() => {
     if (post && post.id && !isPostUpdated) {
-      const bodyContent = typeof post.body === 'string' ? post.body : (Array.isArray(post.body) ? post.body.join('') : '');
+      const bodyContent = typeof post.body === 'string' ? post.body : Array.isArray(post.body) ? post.body.join('') : '';
       bodyRef.current = bodyContent;
       if (typeof post.file === 'string') {
         setFile({
           uri: getFileUri(post.file) || '',
-          type: 'image', // or 'video' depending on your logic
+          type: 'image',
           width: 0,
           height: 0,
           fileSize: 0,
@@ -52,7 +46,6 @@ const NewPost = () => {
       } else {
         setFile(null);
       }
-      // Set content for RichTextEditor
       setTimeout(() => {
         editorRef.current?.setContentHTML(bodyContent);
       }, 3);
@@ -60,29 +53,23 @@ const NewPost = () => {
     }
   }, [post, isPostUpdated]);
 
-  //Hàm chọn ảnh và video trong điện thoại 
-  const onPick = async (isImage: boolean) => {
-    //INPUT IMAGE
-    let mediaConfig: ImagePicker.ImagePickerOptions = {
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+
+  
+
+  const onPick = async (isImage) => {
+    let mediaConfig = {
+      mediaTypes: isImage ? ImagePicker.MediaTypeOptions.Images : ImagePicker.MediaTypeOptions.Videos,
       allowsEditing: true,
-      aspect: [4, 3],
-      quality: 0.7,
+      aspect: isImage ? [4, 3] : undefined,
+      quality: isImage ? 0.7 : undefined,
     };
-    //INPUT VIDEO
-    if (!isImage) {
-      mediaConfig = {
-        mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-        allowsEditing: true,
-      };
-    }
-    let result = await ImagePicker.launchImageLibraryAsync(mediaConfig);//SHOW IN SCREEN
+
+    let result = await ImagePicker.launchImageLibraryAsync(mediaConfig);
     if (!result.canceled && result.assets.length > 0) {
       setFile(result.assets[0]);
     }
   };
 
-  //Hàm đăng bài 
   const onSubmit = async () => {
     if (!bodyRef.current && !file) {
       Alert.alert('Post', "Vui lòng thêm ảnh hoặc nội dung post");
@@ -92,73 +79,54 @@ const NewPost = () => {
       Alert.alert('Post', 'Vui lòng chọn danh mục cho bài viết');
       return;
     }
-    let data: {
-      file: ImagePicker.ImagePickerAsset | null;
-      body: string;
-      userId: any;
-      id?: string;
-      Catagory: string; // Sử dụng chữ thường "catagory" để đồng bộ với hàm createOrUpdatePost
-    } = {
+    let data = {
       file,
       body: bodyRef.current,
       userId: user?.id,
-      Catagory: Catagory, // Chuyển Catagory thành catagory
+      Catagory,
     };
-    console.log("kieu du lieu : ",Catagory)
+
     if (post.id) {
-      data.id = post.id; // TypeScript biết thuộc tính id là hợp lệ
+      data.id = post.id;
     }
-    //create or update post
+
     setLoading(true);
     const res = await createOrUpdatePost(data);
     setLoading(false);
     if (res.success) {
       setFile(null);
       bodyRef.current = '';
-      if (editorRef.current) {
-        editorRef.current.setContentHTML('');
-      }
-      // Điều hướng về trang Home và tải lại trang Home để cập nhật danh sách bài viết
-      router.replace('/home'); // Thay thế trang Home để đảm bảo nó được tải lại
+      editorRef.current?.setContentHTML('');
+      router.replace('/home');
     } else {
       Alert.alert('Post', res.msg);
     }
   };
 
-
-  //-------------------------Main------------------------------------------------------
   return (
     <ScreenWrapper bg="white">
+      {/*
+    
+     */}
       <View style={styles.container}>
-        {/*---------------------------------HEADER START-------------------*/}
         <Header title="Tạo bài đăng" />
-        {/*---------------------------------HEADER END-------------------*/}
+
+
         <ScrollView contentContainerStyle={{ gap: 20 }}>
-          {/*---------------------------USER INFO START--------------- */}
           <View style={styles.header}>
-            <Avatar
-              uri={uri}
-              size={hp(6.5)}
-              rounded={theme.radius.xl}
-            />
+            <Avatar uri={uri} size={hp(6.5)} rounded={theme.radius.xl} />
             <View style={{ gap: 2 }}>
-              <Text style={styles.username}>
-                {user && user.name}
-              </Text>
+              <Text style={styles.username}>{user?.name}</Text>
               <Text style={styles.publicText}>public</Text>
             </View>
           </View>
-          {/*---------------------------USER INFO END--------------- */}
-          {/*--------------------EDIT TEXT START-------------------*/}
+
           <View style={styles.textEditor}>
             <RichTextEditor
               editorRef={editorRef}
-              onChange={(body: string) => (bodyRef.current = body)}
-            />
+              onChange={(body) => (bodyRef.current = body)} />
           </View>
-          {/*--------------------EDIT TEXT END-------------------*/}
 
-          {/*--------------------SHOW VIDEO START--------------- */}
           {file && (
             <View style={styles.file}>
               {getFileType(file) === 'video' ? (
@@ -176,32 +144,23 @@ const NewPost = () => {
                   style={{ flex: 1 }}
                 />
               )}
-
               <Pressable style={styles.closeIcon} onPress={() => setFile(null)}>
                 <Icon1 name="delete" size={20} color="white" />
               </Pressable>
             </View>
           )}
-          {/*--------------------SHOW VIDEO END--------------- */}
 
-          {/*Add catagory for post start */}
           <View style={styles.catagorySection}>
             <Text style={styles.catagoryTitle}>Chọn danh mục</Text>
             <View style={styles.catagoryOptions}>
-              {['Góc thắc mắc học tập', 'Fix bug', 'Đời sống UIT','Tuyển dụng'].map((cat) => (
+              {['Góc thắc mắc học tập', 'Fix bug', 'Đời sống UIT', 'Tuyển dụng'].map((cat) => (
                 <TouchableOpacity
                   key={cat}
-                  style={[
-                    styles.catagoryOption,
-                    Catagory === cat && styles.catagorySelected,
-                  ]}
+                  style={[styles.catagoryOption, Catagory === cat && styles.catagorySelected]}
                   onPress={() => setCatagory(cat)}
                 >
                   <Text
-                    style={[
-                      styles.catagoryText,
-                      Catagory === cat && styles.catagoryTextSelected,
-                    ]}
+                    style={[styles.catagoryText, Catagory === cat && styles.catagoryTextSelected]}
                   >
                     {cat}
                   </Text>
@@ -209,9 +168,6 @@ const NewPost = () => {
               ))}
             </View>
           </View>
-          {/*Add catagory for post end */}
-
-          {/*------------------ADD MEDIA START---------------- */}
           <View style={styles.media}>
             <Text style={styles.addImageText}>Thêm bài viết</Text>
             <View style={styles.mediaIcons}>
@@ -223,9 +179,9 @@ const NewPost = () => {
               </TouchableOpacity>
             </View>
           </View>
-          {/*------------------ADD MEDIA END---------------- */}
+
         </ScrollView>
-        {/*--------------------BUTTON POST START------------ */}
+
         <Button
           buttonStyle={{ height: hp(6.2) }}
           title={post && post.id ? "Cập nhật" : "Post"}
@@ -233,7 +189,6 @@ const NewPost = () => {
           hasShadow={false}
           onPress={onSubmit}
         />
-        {/*--------------------BUTTON POST END------------ */}
       </View>
     </ScreenWrapper>
   );

@@ -105,10 +105,7 @@ const AddFriend = () => {
     const handleSearch = (text: string) => {
         setSearchText(text);
         let filteredData = [...allUsers];
-
-        console.log("selectedFaculty : ",selectedFaculty)
-        console.log("selectedYear : ",selectedYear)
-    
+        
         // Kiểm tra từ khóa tìm kiếm
         if (text.trim().length > 0) {
             filteredData = filteredData.filter(user =>
@@ -122,7 +119,6 @@ const AddFriend = () => {
             setFilteredUsers(filteredData);
             return;
         }
-    
         // Lọc theo khoa nếu khoa được chọn và không phải "Tất cả"
         if (selectedFaculty && selectedFaculty.trim() !== "" && selectedFaculty.trim() !== "-1") {
             filteredData = filteredData.filter(user => user.Khoa?.trim() === selectedFaculty.trim());
@@ -130,7 +126,7 @@ const AddFriend = () => {
     
         // Lọc theo năm nếu năm được chọn và không phải "Tất cả"
         if (selectedYear && selectedYear.trim() !== "" && selectedYear.trim() !== "-1") {
-            filteredData = filteredData.filter(user => user.Nam === Number(selectedYear));
+            filteredData = filteredData.filter(user => user.Nam === String(selectedYear));
         }
     
         // Đặt lại danh sách người dùng sau khi lọc

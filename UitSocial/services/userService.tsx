@@ -392,7 +392,11 @@ export const getUserFriendsList = async (userId: string) => {
 export const fillKhoa = async (
     emailSign: string,
     khoaSign: string,
-    id: string
+    id: string,
+    NgaySinh: number,
+    ThangSinh: number,
+    NamSinh: number,
+    yearOfStudy:String
 ) => {
     try {
         const { error } = await supabase
@@ -401,6 +405,10 @@ export const fillKhoa = async (
                 email: emailSign,
                 Khoa: khoaSign,
                 image: 'profiles/1726640286388.png', // Đường dẫn ảnh mặc định
+                NgaySinh: NgaySinh, // Cột ngày sinh
+                ThangSinh: ThangSinh, // Cột tháng sinh
+                NamSinh: NamSinh, // Cột năm sinh
+                Nam:yearOfStudy,
             })
             .eq('id', id); // Cập nhật theo ID
 
