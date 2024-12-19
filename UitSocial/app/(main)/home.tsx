@@ -27,9 +27,15 @@ const Home = () => {
     const [notificationCount, setNotificationCount] = useState(0);//thông báo comment mới 
     const [scrollY] = useState(new Animated.Value(0));
     const [translateY] = useState(new Animated.Value(0));
-
     const [allPosts, setAllPosts] = useState<any[]>([]); // Lưu danh sách bài viết gốc
-
+    const categories = [
+        { id: 1, name: 'Thịnh hành' },
+        { id: 2, name: 'Góc thắc mắc học tập' },
+        { id: 3, name: 'Fix bug' },
+        { id: 4, name: 'Đời sống UIT' },
+        { id: 5, name: 'Tuyển dụng' },
+    ];
+    const [selectedCategory, setSelectedCategory] = useState('All');
 
     //-------------------------Function------------------------------------------------------
     useEffect(() => {
@@ -96,7 +102,6 @@ const Home = () => {
         }
     };
     
-
     //Lấy các bài post 
     const getPosts = async () => {
         if (!hasMore) return;
@@ -113,7 +118,6 @@ const Home = () => {
         }
     };
     
-
     //api lấy thông tin thời tiết 
     const fetchWeather = async () => {
         try {
@@ -133,17 +137,8 @@ const Home = () => {
             console.error('Error fetching weather data:', error);
         }
     };
+
     //------------------------------Catagory------------------------------------------------------------
-    const categories = [
-        { id: 1, name: 'Thịnh hành' },
-        { id: 2, name: 'Góc thắc mắc học tập' },
-        { id: 3, name: 'Fix bug' },
-        { id: 4, name: 'Đời sống UIT' },
-        { id: 5, name: 'Tuyển dụng' },
-    ];
-
-    const [selectedCategory, setSelectedCategory] = useState('All');
-
     const filterPosts = (category: string) => {
         setSelectedCategory(category);
         if (category === 'Thịnh hành') {
@@ -332,6 +327,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         borderRadius: 20,
         marginRight: 10,
+        borderWidth: 1, 
     },
     activeCategory: {
         backgroundColor: theme.colors.primary,

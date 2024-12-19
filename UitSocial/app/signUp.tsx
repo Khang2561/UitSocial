@@ -13,8 +13,10 @@ import { wp, hp } from '../helpers/common';
 import Input from "@/components/Input";
 import Button from "@/components/Button";
 import { supabase } from "../lib/supabase";
-import RNPickerSelect from "react-native-picker-select";
 import { fillKhoa } from "@/services/userService";
+import { format, isAfter } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import DateTimePickerModal from "react-native-modal-datetime-picker";
 
 const SignUp = () => {
     //-------------------------------------CONST------------------------------------------------------
@@ -28,6 +30,12 @@ const SignUp = () => {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [selectedDepartment, setSelectedDepartment] = useState(""); //chọn khoa
     const [modalVisible, setModalVisible] = useState(false); // Hiển thị modal
+    // Thêm vào state để quản lý ngày tháng năm sinh 
+    const [dateOfBirth, setDateOfBirth] = useState("");
+    const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
+    //Hàm hiển thị/ẩn DateTime Picker 
+    const showDatePicker = () => setDatePickerVisibility(true);
+    const hideDatePicker = () => setDatePickerVisibility(false);
     //------------------------------------FUNCTION------------------------------------------------------
     const departments = [
         { label: "Khoa học máy tính", value: "Khoa học máy tính" },
@@ -37,8 +45,7 @@ const SignUp = () => {
         { label: "Mạng máy tính và truyền thông", value: "Mạng máy tính và truyền thông" },
         { label: "Khoa học và Kỹ thuật Thông tin", value: "Khoa học và Kỹ thuật Thông tin" },
     ];
-
-    //Hàm chọn 
+    //Hàm chọn khoa 
     const handleSelectDepartment = (department: string) => {
         setSelectedDepartment(department);
         setModalVisible(false); // Đóng modal sau khi chọn khoa
@@ -83,11 +90,37 @@ const SignUp = () => {
             Alert.alert("Đăng kí", "Bạn phải chọn khoa");
             return;
         }
+        //--------------------Xử lý ngày tháng năm sinh-----------------
+        const [day, month, year] = dateOfBirth.split('/').map(Number); // Tách ngày, tháng, năm từ chuỗi
+        if (!day || !month || !year) {
+            Alert.alert('Đăng kí', "Ngày sinh không hợp lệ");
+            return;
+        }
         //---------------Lấy thông tin start-------------------------------
         let emailSign = email.trim();
         let nameSign = name.trim();
         let passwordSign = password.trim();
         let khoaSign = selectedDepartment.trim();
+        let NgaySinh = day;
+        let ThangSinh = month;
+        let NamSinh = year;
+
+        // Logic để xác định năm học dựa trên mã sinh viên (MSSV)
+        const mssv = email.split('@')[0]; // Lấy phần trước '@' của email
+        const yearPrefix = parseInt(mssv.substring(0, 2), 10); // Lấy 2 ký tự đầu tiên của MSSV
+        let yearOfStudy;
+        if (yearPrefix === 21) {
+            yearOfStudy = "4"; // Năm 4
+        } else if (yearPrefix === 22) {
+            yearOfStudy = "3"; // Năm 3
+        } else if (yearPrefix === 23) {
+            yearOfStudy = "2"; // Năm 2
+        } else if (yearPrefix === 24) {
+            yearOfStudy = "1"; // Năm 1
+        } else {
+            yearOfStudy = "4+"; // Khác các trường hợp trên là năm 4+
+        }
+
         // HỦY LOADING
         setLoading(false);
 
@@ -109,7 +142,7 @@ const SignUp = () => {
         // Nếu đăng ký thành công, tiếp tục cập nhật thông tin người dùng
         if (user) {
             const id = user.id; // Lấy ID của người dùng từ kết quả đăng ký
-            const updateResult = await fillKhoa(emailSign, khoaSign, id);
+            const updateResult = await fillKhoa(emailSign, khoaSign, id, NgaySinh, ThangSinh, NamSinh,yearOfStudy);
 
             if (updateResult.success) {
                 Alert.alert('Đăng ký thành công', 'Tài khoản đã được tạo thành công');
@@ -119,6 +152,21 @@ const SignUp = () => {
             }
         }
         //---------------Lấy thông tin end-------------------------------
+    };
+
+    // Hàm xử lý ngày chọn 
+    const handleConfirm = (date: Date) => {
+        const today = new Date(); // Ngày hiện tại
+        // Kiểm tra nếu ngày chọn lớn hơn ngày hôm nay thì không cho phép chọn
+        if (isAfter(date, today)) {
+            alert('Ngày sinh không được quá ngày hôm nay');
+            hideDatePicker();
+            return; // Dừng hàm nếu ngày chọn không hợp lệ
+        }
+        // Định dạng ngày theo định dạng "dd/MM/yyyy" và lưu vào state
+        const formattedDate = format(date, 'dd/MM/yyyy', { locale: vi });
+        setDateOfBirth(formattedDate);
+        hideDatePicker();
     };
 
     //--------------------------------------MAIN------------------------------------------------------
@@ -138,7 +186,7 @@ const SignUp = () => {
 
                     {/*----------------WELLCOME------------------*/}
                     <View>
-                        <Text style={style.welcomeText}>Chào,</Text>
+                        <Text style={style.welcomeText}>Chào mừng tới với,</Text>
                         <Text style={style.welcomeText}>UIT SOCIAL</Text>
                     </View>
 
@@ -203,35 +251,23 @@ const SignUp = () => {
                                 editable={false}  // Không cho chỉnh sửa trực tiếp
                             />
                         </TouchableOpacity>
-                        {/* Modal chọn khoa */}
-                        <Modal
-                            transparent={true}
-                            visible={modalVisible}
-                            animationType="slide"
-                            onRequestClose={() => setModalVisible(false)}
-                        >
-                            <TouchableOpacity
-                                style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}
-                                onPress={() => setModalVisible(false)}  // Đóng modal khi nhấn ngoài
-                            >
-                                <View style={{ backgroundColor: 'white', width: '80%', borderRadius: 10 }}>
-                                    <FlatList
-                                        data={departments}
-                                        renderItem={({ item }) => (
-                                            <TouchableOpacity
-                                                onPress={() => handleSelectDepartment(item.value)} // Chọn khoa
-                                                style={{ padding: 15, borderBottomWidth: 1, borderBottomColor: theme.colors.text }}
-                                            >
-                                                <Text style={{ fontSize: hp(2), color: theme.colors.text }}>
-                                                    {item.label}
-                                                </Text>
-                                            </TouchableOpacity>
-                                        )}
-                                        keyExtractor={(item, index) => index.toString()}
-                                    />
-                                </View>
-                            </TouchableOpacity>
-                        </Modal>
+
+                        {/* Điền ngày tháng năm sinh*/}
+                        <TouchableOpacity onPress={showDatePicker}>
+                            <Input
+                                icon={<Icon4 name="calendar" size={26} />}
+                                placeholder="Chọn ngày sinh"
+                                value={dateOfBirth}
+                                editable={false}  // Không cho chỉnh sửa trực tiếp
+                            />
+                        </TouchableOpacity>
+                        {/* Modal chọn ngày */}
+                        <DateTimePickerModal
+                            isVisible={isDatePickerVisible}
+                            mode="date"
+                            onConfirm={handleConfirm}
+                            onCancel={hideDatePicker}
+                        />
                         {/*Button*/}
                         <Button title={'Đăng kí'} loading={loading} onPress={onSubmit} />
                     </View>
@@ -248,6 +284,35 @@ const SignUp = () => {
                     </View>
                 </ScrollView>
             </KeyboardAvoidingView>
+            {/* Modal chọn khoa */}
+            <Modal
+                transparent={true}
+                visible={modalVisible}
+                animationType="slide"
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <TouchableOpacity
+                    style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' }}
+                    onPress={() => setModalVisible(false)}  // Đóng modal khi nhấn ngoài
+                >
+                    <View style={{ backgroundColor: 'white', width: '80%', borderRadius: 10 }}>
+                        <FlatList
+                            data={departments}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity
+                                    onPress={() => handleSelectDepartment(item.value)} // Chọn khoa
+                                    style={{ padding: 15, borderBottomWidth: 1, borderBottomColor: theme.colors.text }}
+                                >
+                                    <Text style={{ fontSize: hp(2), color: theme.colors.text }}>
+                                        {item.label}
+                                    </Text>
+                                </TouchableOpacity>
+                            )}
+                            keyExtractor={(item, index) => index.toString()}
+                        />
+                    </View>
+                </TouchableOpacity>
+            </Modal>
         </ScreenWrapper>
     );
 };

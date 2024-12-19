@@ -89,16 +89,24 @@ export default Main;
 const styles = StyleSheet.create({
     navbar: {
         position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
+        bottom: 10, // Tạo khoảng cách với đáy màn hình
+        left: 10, // Đẩy vào trong để tạo khoảng cách
+        right: 10, // Đẩy vào trong để tạo khoảng cách
         height: hp(7),
         flexDirection: 'row',
         justifyContent: 'space-around',
         alignItems: 'center',
         backgroundColor: 'white',
         elevation: 10,
-        borderTopWidth: 1,
-        borderTopColor: '#eaeaea',
+        borderTopWidth: 0, // Loại bỏ đường viền trên
+        borderRadius: 25, // Bo tròn góc nhiều hơn
+        shadowColor: '#000', // Màu bóng
+        shadowOffset: {
+            width: 0,
+            height: 4, // Tăng chiều cao bóng để nổi bật hơn
+        },
+        shadowOpacity: 0.3, // Tăng độ mờ bóng
+        shadowRadius: 8, // Mở rộng bán kính bóng
+        overflow: 'hidden', // Đảm bảo nội dung bên trong không vượt ra ngoài
     },
 });
