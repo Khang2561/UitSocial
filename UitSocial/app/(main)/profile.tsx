@@ -51,7 +51,6 @@ const Profile = () => {
         duration: 200,
         useNativeDriver: true,
       }).start();
-
     });
     return () => {
       scrollY.removeListener(listenerId);
@@ -397,6 +396,4 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'white',
   },
-
-
 });

@@ -17,6 +17,7 @@ import { RichEditor } from 'react-native-pell-rich-editor';
 import { getSupabaseFileUrl, getFileUri, isLocalFile, getFileType } from '../../services/imageService';
 
 const NewPost = () => {
+  //---------------------------------------CONST-----------------------------------------------
   const post = useLocalSearchParams();
   const { user } = useAuth();
   const bodyRef = useRef('');
@@ -28,6 +29,8 @@ const NewPost = () => {
   const [isPostUpdated, setIsPostUpdated] = useState(false);
   const [Catagory, setCatagory] = useState('');
 
+  //---------------------------------FUNCTION---------------------------------------------------
+  //UseEffect
   useEffect(() => {
     if (post && post.id && !isPostUpdated) {
       const bodyContent = typeof post.body === 'string' ? post.body : Array.isArray(post.body) ? post.body.join('') : '';
@@ -53,9 +56,7 @@ const NewPost = () => {
     }
   }, [post, isPostUpdated]);
 
-
-  
-
+  //Hàm chọn ảnh 
   const onPick = async (isImage) => {
     let mediaConfig = {
       mediaTypes: isImage ? ImagePicker.MediaTypeOptions.Images : ImagePicker.MediaTypeOptions.Videos,
@@ -70,6 +71,7 @@ const NewPost = () => {
     }
   };
 
+  //Hàm đăng ảnh 
   const onSubmit = async () => {
     if (!bodyRef.current && !file) {
       Alert.alert('Post', "Vui lòng thêm ảnh hoặc nội dung post");
@@ -89,7 +91,6 @@ const NewPost = () => {
     if (post.id) {
       data.id = post.id;
     }
-
     setLoading(true);
     const res = await createOrUpdatePost(data);
     setLoading(false);
@@ -97,12 +98,13 @@ const NewPost = () => {
       setFile(null);
       bodyRef.current = '';
       editorRef.current?.setContentHTML('');
-      router.replace('/home');
+      router.replace('/main');
     } else {
       Alert.alert('Post', res.msg);
     }
   };
 
+  //--------------------------------------------MAIN-------------------------------------------
   return (
     <ScreenWrapper bg="white">
       {/*
@@ -194,7 +196,7 @@ const NewPost = () => {
   );
 };
 
-//-------------------------CSS------------------------------------------------------
+//--------------------------------------CSS------------------------------------------------------
 const styles = StyleSheet.create({
   container: {
     flex: 1,
